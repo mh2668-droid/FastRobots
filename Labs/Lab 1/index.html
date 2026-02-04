@@ -85,7 +85,7 @@
       <span class="muted">Fast Robots | Spring 2026</span>
     </div>
 
-    <h1>Lab 1</h1>
+    <h1>Lab 1(not completed)</h1>
     <p class="subtitle">Artemis setup + BLE communication (Lab 1A and Lab 1B)</p>
 
     <!-- ===================== -->
@@ -160,7 +160,10 @@
     <div class="card">
       <h3>Conclusion</h3>
       <p>
-        <!-- Short reflection: what worked, what you learned, biggest issue solved -->
+        In this lab, I set up the Arduino IDE and learned how to use the Artemis Nano board.
+        I tested basic functions such as blinking an LED, using the serial monitor, and reading
+        data from the temperature sensor and microphone. This lab helped me understand the board
+        and prepared me for later labs involving sensing and communication.
       </p>
     </div>
 
@@ -172,7 +175,7 @@
     <div class="card">
       <h3>Objective</h3>
       <p>
-        <!-- BLE debugging system between laptop (central) and Artemis (peripheral). -->
+        The purpose of Lab 1B is to establish communication between computer and the Artemis board through the Bluetooth stack. 
       </p>
     </div>
 
@@ -181,16 +184,57 @@
 
       <h4>BLE Setup</h4>
       <p>
-        <!-- Python env, Jupyter, libraries, connecting to Artemis -->
+        I set up a Python environment for BLE communication and installed the required packages (including <code>bleak</code>).
+        On the Artemis side, I uploaded the provided <code>ble_arduino.ino</code> sketch and confirmed the board was advertising by printing its BLE MAC address in the Serial Monitor.
+      </p>
+      <img src="images/macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
+      <p class="muted">Serial Monitor output confirming BLE advertising and the Artemis MAC address.</p>
+
+      <h4>Configuration</h4>
+      <p>
+        To connect the Python client to my specific Artemis board, I updated <code>connection.yaml</code> with my Artemis MAC address
+        (<code>artemis_address</code>) and a unique BLE service UUID (<code>ble_service</code>). I generated the UUID in Python using <code>uuid4()</code>
+        and set the same service UUID in the Arduino sketch so both sides matched.
       </p>
 
-      <h4>Codebase Overview</h4>
       <p>
-        <!-- Explain service + characteristics:
-             RX_STRING (write from laptop to Artemis),
-             TX_STRING (notify from Artemis to laptop),
-             TX_FLOAT -->
+        The BLE service exposes several characteristics that define how data is sent between the laptop and the Artemis:
       </p>
+      <ul>
+        <li><code>TX_CMD_STRING</code>: laptop writes command strings to the Artemis (e.g., <code>ECHO</code>, <code>GET_TIME_MILLIS</code>)</li>
+        <li><code>RX_STRING</code>: Artemis notifies string responses back to the laptop</li>
+        <li><code>RX_FLOAT</code>: Artemis sends numeric data back to the laptop (used in later labs / optional here)</li>
+      </ul>
+
+      <img src="images/araddanduuids.png" alt="connection.yaml showing Artemis address and BLE service UUID">
+      <p class="muted">Updated connection.yaml with the Artemis MAC address and BLE service UUID.</p>
+
+      <img src="images/adsketch.png" alt="Arduino sketch defining BLE service UUID">
+      <p class="muted">Matching BLE service UUID defined in the Arduino sketch.</p>
+
+      <img src="images/jp.png" alt="Python UUID generation using uuid4">
+      <p class="muted">Unique BLE service UUID generated in Python using <code>uuid4()</code>.</p>
+
+
+      <h4>Code Base</h4>
+      <p>
+        The provided BLE codebase has two parts: an Arduino program on the Artemis (BLE peripheral) and a Python client on the laptop (BLE central).
+        The Python client connects using the MAC address and service UUID, then sends commands by writing to <code>TX_CMD_STRING</code>.
+        On the Artemis, the sketch reads the received command, parses it, and runs the corresponding handler.
+      </p>
+
+      <p>
+        After executing a command, the Artemis returns results to the laptop using BLE notifications (typically through <code>RX_STRING</code>).
+        In Python, a notification handler can be registered to receive these messages asynchronously, which is especially useful for streaming data and measuring data rate.
+      </p>
+
+
+
+
+
+
+
+
 
     </div>
 
@@ -224,10 +268,10 @@
       </div>
 
       <h4>Relevant Code Snippets</h4>
-      <p class="muted">Include only the relevant blocks, not the full files.</p>
+      <p class="muted">haha</p>
 
-      <pre><code>// Arduino: case GET_TIME_MILLIS / GET_TIME_RATE (paste only relevant part)</code></pre>
-      <pre><code># Python: notify handler + rate calculation (paste only relevant part)</code></pre>
+      <pre><code>// Arduino: case GET_TIME_MILLIS / GET_TIME_RATE </code></pre>
+      <pre><code># Python: notify handler + rate calculation </code></pre>
     </div>
 
     <div class="card">

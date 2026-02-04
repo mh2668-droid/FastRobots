@@ -74,6 +74,15 @@
       gap: 10px;
       font-size: 14px;
     }
+    .img-small {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
 
@@ -182,68 +191,53 @@
     <div class="card">
       <h3>Prelab</h3>
 
-      <h4>BLE Setup</h4>
+      <h4>Setup</h4>
       <p>
-        I set up a Python environment for BLE communication and installed the required packages.
-        On the Artemis side, I uploaded the provided <code>ble_arduino.ino</code> sketch, which enables
-        BLE advertising and command handling. The board successfully printed its BLE MAC address
-        to the Serial Monitor, confirming that BLE advertising was working correctly.
+        I first set up the laptop and the Artemis Nano so they could reliably communicate over BLE.
+        On the laptop, I created a Python environment for BLE and installed the required packages from the lab codebase.
+        On the Artemis side, I uploaded the provided <code>ble_arduino.ino</code> sketch, which initializes BLE, defines the GATT service/characteristics,
+        and starts advertising.
       </p>
-      <img src="macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
+      <p>
+        After uploading, the Artemis printed its BLE MAC address in the Serial Monitor. This confirmed that BLE initialized correctly and the board was advertising.
+      </p>
+      <img class="img-small" src="macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
       <p class="muted">Serial Monitor output confirming BLE advertising and the Artemis MAC address.</p>
-      <p>
-
-      </p>
-     
 
       <div style="margin-top: 28px;"></div>
       <h4>Configuration</h4>
       <p>
-        To allow the Python client to connect to my specific Artemis board, I updated
-        <code>connection.yaml</code>, which is the configuration file used by the Python BLE client.
-        This file stores the Artemis MAC address, the BLE service UUID, and the UUIDs of each BLE
-        characteristic. A unique BLE service UUID was generated in Python using <code>uuid4()</code>
-        and used consistently in both the Arduino sketch and the Python configuration.
+        To make sure my Python client connects to the correct board and the correct BLE interface, I updated <code>connection.yaml</code>.
+        This file stores the Artemis MAC address, the BLE service UUID, and the UUIDs for each characteristic.
       </p>
-      <img src="jp.png" alt="uuid4() used to generate a BLE service UUID">
+      <p>
+        I generated a unique BLE service UUID in Python using <code>uuid4()</code> and used the same UUID in both the Arduino sketch and <code>connection.yaml</code>.
+      </p>
+      <img class="img-small" src="jp.png" alt="uuid4() used to generate a BLE service UUID">
       <p class="muted">Generating a unique BLE service UUID in Python.</p>
 
       <p>
-        The BLE service exposes the following characteristics, which define how data is exchanged
-        between the laptop and the Artemis:
+        The service exposes these characteristics, which define how data moves between the laptop and the Artemis:
       </p>
       <ul>
-        <code>TX_CMD_STRING</code>: used by the laptop to send command strings from Python to the Artemis</li>
-        <code>RX_STRING</code>: used by the Artemis to send string responses back to the laptop using notifications</li>
-        <code>RX_FLOAT</code>: defined for sending numeric data, which is used in later or extended tasks</li>
+        <li><code>TX_CMD_STRING</code>: laptop → Artemis (write). Used to send command strings from Python.</li>
+        <li><code>RX_STRING</code>: Artemis → laptop (notify/read). Used to send string replies and streamed data.</li>
+        <li><code>RX_FLOAT</code>: Artemis → laptop (notify/read). Reserved for numeric data (used in later/extended tasks).</li>
       </ul>
-      <p>
-        
-      </p>
 
       <p>
-        I generated a unique BLE service UUID in Python using <code>uuid4()</code>, which
-        creates a random UUID to uniquely identify my BLE service.
+        The same service UUID and characteristic UUIDs are defined in the Arduino sketch so the Artemis advertises the expected BLE interface.
       </p>
-
-      <img src="inosketch.png" alt="Arduino sketch showing BLE service and characteristic UUID definitions">
+      <img class="img-small" src="inosketch.png" alt="Arduino sketch showing BLE service and characteristic UUID definitions">
       <p class="muted">Arduino sketch: service UUID and characteristic UUID definitions.</p>
 
       <p>
-        <strong>Step 2:</strong> I updated the Arduino sketch (<code>ble_arduino.ino</code>) to define the BLE service
-        and characteristic UUIDs so the Artemis advertises the correct BLE interface.
+        Finally, I copied the MAC address, service UUID, and characteristic UUIDs into <code>connection.yaml</code> so the Python client connects to the correct device and characteristics.
       </p>
-
-      <p>
-        <strong>Step 3:</strong> I copied the same MAC address, service UUID, and characteristic UUIDs into
-        <code>connection.yaml</code> so the Python client connects to the correct BLE service on my Artemis board.
-      </p>
-
-      <img src="yamlsk.png" alt="connection.yaml showing Artemis address, BLE service UUID, and characteristic UUIDs">
+      <img class="img-small" src="yamlsk.png" alt="connection.yaml showing Artemis address, BLE service UUID, and characteristic UUIDs">
       <p class="muted">connection.yaml: Artemis MAC address, service UUID, and characteristic UUIDs.</p>
 
       <div style="margin-top: 28px;"></div>
-
 
       <h4>Code Base</h4>
       <p>
@@ -256,15 +250,6 @@
         After executing a command, the Artemis returns results to the laptop using BLE notifications (typically through <code>RX_STRING</code>).
         In Python, a notification handler can be registered to receive these messages asynchronously, which is especially useful for streaming data and measuring data rate.
       </p>
-
-
-
-
-
-
-
-
-
     </div>
 
     <div class="card">

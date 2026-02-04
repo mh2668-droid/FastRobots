@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 1 | Fast Robots</title>
+
+  <style>
+    :root {
+      --text: #1f2328;
+      --muted: #57606a;
+      --border: #d0d7de;
+      --bg: #ffffff;
+      --soft: #f6f8fa;
+      --link: #0969da;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--soft);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .back-button:hover {
+      filter: brightness(0.98);
+    }
+
+    h1 {
+      margin: 10px 0 6px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+      margin: 14px 0;
+    }
+
+    .toc a {
+      color: var(--link);
+      text-decoration: none;
+    }
+    .toc a:hover { text-decoration: underline; }
+
+    h2 {
+      margin-top: 34px;
+      padding-top: 10px;
+      border-top: 2px solid var(--border);
+      font-size: 24px;
+    }
+
+    h3 { margin-top: 22px; font-size: 18px; }
+    h4 { margin-top: 16px; font-size: 16px; color: #2b2f36; }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: var(--soft);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    pre {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: 13px;
+      margin: 10px 0 16px;
+    }
+
+    code {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 0.95em;
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 1</h1>
+    <p class="subtitle">Artemis setup + BLE communication (Lab 1A and Lab 1B)</p>
+
+    <div class="card toc">
+      <strong>Table of Contents</strong>
+      <ul>
+        <li><a href="#lab1a">Lab 1A</a></li>
+        <li><a href="#lab1b">Lab 1B</a></li>
+      </ul>
+    </div>
+
+    <!-- Optional: Inline demo video -->
+    <div class="card">
+      <h3>Demo Video (optional)</h3>
+      <p class="muted">Replace <code>YOUTUBE_VIDEO_ID</code> with your real ID.</p>
+      <div class="video-wrap">
+        <iframe
+          src="https://www.youtube.com/embed/YOUTUBE_VIDEO_ID"
+          title="Lab 1 Demo Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- ====== LAB 1A ======= -->
+    <!-- ===================== -->
+    <h2 id="lab1a">Lab 1A</h2>
+
+    <div class="card">
+      <h3>Objective</h3>
+      <p>
+        <!-- 2 to 4 sentences. What Lab 1A is trying to accomplish. -->
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Prelab</h3>
+
+      <h4>Setup</h4>
+      <p>
+        <!-- Arduino IDE, SparkFun Apollo3 install, CH340 driver, board/port selection -->
+      </p>
+
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Add screenshot of Serial Monitor printing MAC address or successful upload.</p>
+        <!-- Example:
+        <img src="img/lab1a_mac.png" alt="MAC address printout">
+        -->
+      </div>
+
+      <h4>Codebase Familiarization</h4>
+      <p>
+        <!-- Briefly describe examples used and what they demonstrate -->
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Tasks</h3>
+
+      <h4>Task 1: Blink</h4>
+      <p><!-- What you ran + what you observed --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Photo/video/screenshot of LED blinking.</p>
+      </div>
+
+      <h4>Task 2: Serial Communication</h4>
+      <p><!-- Example4_Serial behavior + baud rate used --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot of serial monitor showing echo or prints.</p>
+      </div>
+
+      <h4>Task 3: Temperature Sensor</h4>
+      <p><!-- How temperature changes when touching or blowing on board --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot showing temperature values changing.</p>
+      </div>
+
+      <h4>Task 4: Microphone</h4>
+      <p><!-- How loudest frequency changes with speaking/whistling --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot of loudest frequency output changing.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Conclusion</h3>
+      <p>
+        <!-- Short reflection: what worked, what you learned, biggest issue solved -->
+      </p>
+    </div>
+
+    <!-- ===================== -->
+    <!-- ====== LAB 1B ======= -->
+    <!-- ===================== -->
+    <h2 id="lab1b">Lab 1B</h2>
+
+    <div class="card">
+      <h3>Objective</h3>
+      <p>
+        <!-- BLE debugging system between laptop (central) and Artemis (peripheral). -->
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Prelab</h3>
+
+      <h4>BLE Setup</h4>
+      <p>
+        <!-- Python env, Jupyter, libraries, connecting to Artemis -->
+      </p>
+
+      <h4>Codebase Overview</h4>
+      <p>
+        <!-- Explain service + characteristics:
+             RX_STRING (write from laptop to Artemis),
+             TX_STRING (notify from Artemis to laptop),
+             TX_FLOAT -->
+      </p>
+
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot showing successful BLE connection (Connected to: MAC).</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Tasks</h3>
+
+      <h4>Task 1: ECHO Command</h4>
+      <p><!-- Laptop sends string, Artemis replies augmented string --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot of Jupyter output and Arduino serial print (if used).</p>
+      </div>
+
+      <h4>Task 2: GET_TIME_MILLIS</h4>
+      <p><!-- Artemis replies with T:123456 --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot showing: Notify: T:... and Arduino Sent time: ...</p>
+      </div>
+
+      <h4>Task 3: Notification Handler</h4>
+      <p><!-- Callback parses time from T:... --></p>
+      <div class="media">
+        <strong>Evidence:</strong>
+        <p class="muted">Screenshot of Python showing Notify + Parsed time.</p>
+      </div>
+
+      <h4>Task 4: Time Streaming and Data Rate</h4>
+      <p>
+        <!-- Describe: stream timestamps for N seconds, count messages,
+             compute messages/sec and KiB/sec -->
+      </p>
+
+      <div class="media">
+        <strong>Results:</strong>
+        <ul>
+          <li>Duration: <!-- e.g. 5.0 s --></li>
+          <li>Messages received: <!-- N --></li>
+          <li>Message rate: <!-- N/duration --></li>
+          <li>Payload size per message: <!-- e.g. len("T:123456") bytes --></li>
+          <li>Effective payload rate: <!-- bytes/sec and KiB/sec --></li>
+        </ul>
+      </div>
+
+      <h4>Relevant Code Snippets</h4>
+      <p class="muted">Include only the relevant blocks, not the full files.</p>
+
+      <pre><code>// Arduino: case GET_TIME_MILLIS / GET_TIME_RATE (paste only relevant part)</code></pre>
+      <pre><code># Python: notify handler + rate calculation (paste only relevant part)</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>Conclusion</h3>
+      <p>
+        <!-- What you learned, biggest debugging issue, how you solved it -->
+      </p>
+    </div>
+
+    <div class="footer">
+      <a class="back-button" href="../index.html">← Back to Main Page</a>
+      <span>Last updated: <!-- optional date --></span>
+    </div>
+  </div>
+</body>
+</html>

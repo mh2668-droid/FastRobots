@@ -187,7 +187,7 @@
         I set up a Python environment for BLE communication and installed the required packages (including <code>bleak</code>).
         On the Artemis side, I uploaded the provided <code>ble_arduino.ino</code> sketch and confirmed the board was advertising by printing its BLE MAC address in the Serial Monitor.
       </p>
-      <img src="images/macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
+      <img src="macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
       <p class="muted">Serial Monitor output confirming BLE advertising and the Artemis MAC address.</p>
 
       <h4>Configuration</h4>
@@ -206,13 +206,13 @@
         <li><code>RX_FLOAT</code>: Artemis sends numeric data back to the laptop (used in later labs / optional here)</li>
       </ul>
 
-      <img src="images/araddanduuids.png" alt="connection.yaml showing Artemis address and BLE service UUID">
+      <img src="araddanduuids.png" alt="connection.yaml showing Artemis address and BLE service UUID">
       <p class="muted">Updated connection.yaml with the Artemis MAC address and BLE service UUID.</p>
 
-      <img src="images/adsketch.png" alt="Arduino sketch defining BLE service UUID">
+      <img src="adsketch.png" alt="Arduino sketch defining BLE service UUID">
       <p class="muted">Matching BLE service UUID defined in the Arduino sketch.</p>
 
-      <img src="images/jp.png" alt="Python UUID generation using uuid4">
+      <img src="jp.png" alt="Python UUID generation using uuid4">
       <p class="muted">Unique BLE service UUID generated in Python using <code>uuid4()</code>.</p>
 
 

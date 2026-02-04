@@ -201,6 +201,19 @@
       <p>
         After uploading, the Artemis printed its BLE MAC address in the Serial Monitor. This confirmed that BLE initialized correctly and the board was advertising.
       </p>
+
+      <p>
+      On the Python side, I initialized the BLE client and established a connection to the Artemis board using the provided codebase. This step creates a BLE controller object and connects to the Artemis using the MAC address and UUIDs specified in <code>connection.yaml</code>.
+      </p>
+
+      <pre><code class="language-python">
+# Get Artemis BLE controller
+ble = get_ble_controller()
+
+# Connect to the Artemis device
+ble.connect()
+</code></pre>
+
       <img class="img-small" src="macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
       <p class="muted">Serial Monitor output confirming BLE advertising and the Artemis MAC address.</p>
 
@@ -252,6 +265,12 @@
       </p>
     </div>
 
+
+
+
+
+
+    
     <div class="card">
       <h3>Tasks</h3>
 

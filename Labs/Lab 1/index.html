@@ -4,39 +4,89 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lab 1 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
 
 <body>
   <div class="container">
     <div class="topbar">
       <!-- Adjust this path based on where you put lab1.html -->
-      <a class="back-button" href="../index.html">← Back to Main Page</a>
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
       <span class="muted">Fast Robots | Spring 2026</span>
     </div>
 
     <h1>Lab 1</h1>
     <p class="subtitle">Artemis setup + BLE communication (Lab 1A and Lab 1B)</p>
-
-    <div class="card toc">
-      <strong>Table of Contents</strong>
-      <ul>
-        <li><a href="#lab1a">Lab 1A</a></li>
-        <li><a href="#lab1b">Lab 1B</a></li>
-      </ul>
-    </div>
-
-    <!-- Optional: Inline demo video -->
-    <div class="card">
-      <h3>Demo Video (optional)</h3>
-      <p class="muted">Replace <code>YOUTUBE_VIDEO_ID</code> with your real ID.</p>
-      <div class="video-wrap">
-        <iframe
-          src="https://www.youtube.com/embed/YOUTUBE_VIDEO_ID"
-          title="Lab 1 Demo Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      </div>
-    </div>
 
     <!-- ===================== -->
     <!-- ====== LAB 1A ======= -->
@@ -201,7 +251,7 @@
     </div>
 
     <div class="footer">
-      <a class="back-button" href="../index.html">← Back to Main Page</a>
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
       <span>Last updated: <!-- optional date --></span>
     </div>
   </div>

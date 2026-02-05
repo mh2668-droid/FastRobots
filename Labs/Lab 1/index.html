@@ -288,22 +288,18 @@
       <h3>Tasks</h3>
 
       <h4>Task 1: ECHO Command</h4>
-
-      <h5>Goal</h5>
       <p>
-        Send a string from the laptop to the Artemis using the <code>ECHO</code> command, then read back an
+        The goal of this task is to send a string from the laptop to the Artemis using the <code>ECHO</code> command, then read back an
         “augmented” reply from the Artemis over the BLE string characteristic.
       </p>
-
-      <h5>Implementation</h5>
       <p>
-        From Python (Jupyter), I sent a test payload using:
+        First, I sent a test payload From Python using:
       </p>
       <pre><code class="language-python">ble.send_command(CMD.ECHO, "HiHello")</code></pre>
 
       <p>
         On the Artemis side, the command is received through the writeable command characteristic, parsed by
-        <code>RobotCommand</code>, and the next token (the string) is extracted into <code>char_arr</code>. I then built
+        <code>RobotCommand</code>, and the string is extracted into <code>char_arr</code>. I then built
         the response using <code>EString</code> and wrote it back to the BLE TX string characteristic.
       </p>
 
@@ -323,7 +319,6 @@
   Serial.println(tx_estring_value.c_str());
   break;</code></pre>
 
-      <h5>Results</h5>
       <p>
         After sending <code>HiHello</code> from Python, the laptop received the modified reply
         <code>Robot says -> HiHello :)</code>. The Serial Monitor also confirmed the command reception and the
@@ -331,20 +326,61 @@
       </p>
 
       <img class="img-small" src="echo.png" alt="Serial monitor showing RX wrote and Echo reply for the ECHO command">
-      <p class="muted">Serial Monitor output for the ECHO command (received payload and augmented reply).</p>
 
 
 
+     
+      <h4>Task 2: Send Three Floats</h4>
+
+        <p>
+        In this task, I implemented and tested a command that sends three floating-point values
+        from the laptop to the Artemis over BLE. The goal was to verify that numerical data can
+        be transmitted, parsed, and interpreted correctly on the microcontroller.
+        </p>
+
+        <h5>Implementation</h5>
+        <p>
+        From Python, I sent three floats as a single command payload using the
+        <code>SEND_THREE_FLOATS</code> command. The values were separated by the
+        <code>|</code> delimiter, which is handled by the provided <code>RobotCommand</code>
+        parser on the Artemis.
+        </p>
+
+        <pre><code class="language-python">
+        ble.send_command(CMD.SEND_THREE_FLOATS, "1.1|2.2|3.3")
+        </code></pre>
+
+        <p>
+        On the Artemis side, the command handler extracts each value sequentially using
+        <code>get_next_value()</code> and stores them as floating-point variables.
+        </p>
+
+        <h5>Results</h5>
+        <p>
+        After sending the command, the Artemis successfully parsed and printed all three values
+        to the Serial Monitor, confirming correct reception and decoding of the data.
+        </p>
+
+        <img class="img-small" src="float.png" alt="Serial output showing three floats received">
+
+        <pre><code>
+        Three floats received: 1.10, 2.20, 3.30
+        </code></pre>
+
+        <p class="muted">
+        Serial Monitor output confirming that three floating-point values were received and
+        parsed correctly on the Artemis.
+        </p>
 
 
 
-      <h4>Task 2: GET_TIME_MILLIS</h4>
+      <h4>Task 3: GET_TIME_MILLIS</h4>
       <p><!-- Artemis replies with T:123456 --></p>
 
-      <h4>Task 3: Notification Handler</h4>
+      <h4>Task 4: Notification Handler</h4>
       <p><!-- Callback parses time from T:... --></p>
 
-      <h4>Task 4: Time Streaming and Data Rate</h4>
+      <h4>Task 5: Time Streaming and Data Rate</h4>
       <p>
         <!-- Describe: stream timestamps for N seconds, count messages,
              compute messages/sec and KiB/sec -->

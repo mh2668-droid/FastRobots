@@ -222,9 +222,7 @@
       </p>
       
       <img class="img-small" src="jp.png" alt="uuid4() used to generate a BLE service UUID">
-      <p class="muted">
-        Generating a unique BLE service UUID in Python using <code>uuid4()</code>.
-      </p>
+    
       
       <p>
         The BLE service exposes three characteristics that define how data moves between the laptop and the Artemis:
@@ -821,7 +819,8 @@
         </p>
 
         <h4>Arduino Implementation</h4>
-        <pre><code class="language-cpp">case REPLY_5B:
+        <code class="language-cpp">
+        case REPLY_5B:
         tx_characteristic_string.writeValue("ABCDE");
         break;
 
@@ -830,7 +829,7 @@
         memset(msg, 'A', 120);
         msg[120] = '\0';
         tx_characteristic_string.writeValue(msg);
-        break;</code></pre>
+        break;</code>
 
         <h4>Python Measurement (condensed)</h4>
         <pre><code class="language-python"># handler timestamps replies
@@ -864,7 +863,6 @@
         <img class="img-small" src="91.png" alt="BLE throughput vs payload size">
         <img class="img-small" src="92.png" alt="f">
 
-        <h4>Discussion</h4>
         <p>
             From the result, we can see that RTT was nearly the same for both payload sizes, indicating that BLE communication is dominated
             by fixed overhead rather than payload length. Small packets suffer heavily from this overhead,
@@ -872,6 +870,8 @@
             and achieve much higher data rates.
         </p>
         </section>
+
+
 
 
 

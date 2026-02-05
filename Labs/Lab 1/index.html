@@ -343,7 +343,7 @@
 
 
 
-      <p>   </p>
+      
     
       <div class="media">
       <h4>Task 2: Send Three Floats</h4>
@@ -389,7 +389,7 @@
       <img class="img-small" src="float.png" alt="Serial output showing RX wrote and three floats received">
 
 
-      <p>   </p>
+     
         </div>
 
 
@@ -446,7 +446,7 @@
         </div>
 
 
-        <p>   </p>
+        
         </div>
 
 
@@ -481,7 +481,7 @@
         These timestamps are stored for later analysis.
         </p>
 
-        <p>   </p>
+        
         </div>
 
 
@@ -511,8 +511,7 @@
 
         print("Messages received:", len(times_ms))
         print("First 5:", times_ms[:5])
-        print("Last 5:", times_ms[-5:])
-        </code></pre>
+        print("Last 5:", times_ms[-5:])</code></pre>
 
         <p>
         On the Artemis side, the <code>GET_TIME_RATE</code> command sends the current time
@@ -543,8 +542,7 @@
             }
         }
         break;
-        }
-        </code></pre>
+        }</code></pre>
 
         <p>
         During one run, the Python client received <strong>207 timestamp messages</strong>.
@@ -582,7 +580,7 @@
         41.5 messages/s × 7 bytes ≈ 290 bytes/s ≈ 0.28 KiB/s
         </p>
 
-        <p>   </p>
+        
         </div>
 
 
@@ -614,8 +612,7 @@
             Serial.print("Recorded count = ");
             Serial.println(time_count);
             break;
-        }
-        </code></pre>
+        }</code></pre>
 
 
 
@@ -624,7 +621,6 @@
         </p>
 
         <pre><code class="language-cpp">
-
         case SEND_TIME_DATA:
         {
             Serial.print("Sending count = ");
@@ -645,8 +641,7 @@
 
             Serial.println("Sent DONE");
             break;
-        }
-        </code></pre>
+        }</code></pre>
 
         <h4>Buffered Notification Handler (Python)</h4>
         <p>
@@ -659,8 +654,7 @@
             if message starts with "T:":
                 parse time and append to list
             if message == "DONE":
-                mark transfer complete
-        </code></pre>
+                mark transfer complete</code></pre>
 
         <p>
         After issuing the <code>RECORD_TIME_DATA</code> command and allowing the buffer to fill, I sent the <code>SEND_TIME_DATA</code> command from Python. The laptop successfully received all buffered time values followed by the <code>DONE</code> message.
@@ -672,7 +666,7 @@
 
         <img class="img-small" src="62.png"
             alt="Arduino Serial Monitor showing buffered recording and send">
-        <p>   </p>
+      
         </div>
 
 
@@ -707,8 +701,7 @@
             Serial.print("Recorded paired samples = ");
             Serial.println(time_count);
             break;
-        }
-        </code></pre>
+        }</code></pre>
         <p>
         The command <code>GET_TEMP_READINGS</code> then iterates through both arrays and sends each paired sample as a single formatted string:
         <code>D:&lt;time_ms&gt;,&lt;temp_x100&gt;</code>. After all samples are sent, the Artemis transmits a <code>DONE</code> message.
@@ -764,7 +757,7 @@
             alt="Python output confirming buffered data received">
 
 
-            <p>   </p>
+          
         </div>
 
         <div class="media">
@@ -825,7 +818,7 @@
             Overall, real-time streaming is best for live monitoring and feedback, while buffered
             data transfer is more effective for collecting high-resolution data for later analysis.
             </p>
-            <p>   </p>
+          
         </div>
 
         <div class="media">
@@ -893,7 +886,7 @@
         </section>
         </div>
 
-        <p>   </p>
+       
 
         <div class="media">
         
@@ -943,19 +936,20 @@
       <p>
         <p>
         
+        
                 In this lab, I learned how Bluetooth Low Energy communication works between the Artemis
                 board and my laptop, including command-based messaging, notifications, and buffered
-                data transfer. I saw firsthand how BLE overhead limits real-time streaming rates and
-                why storing data locally before transmission allows for higher sampling rates and more
-                reliable data collection. And of course I sh
+                data transfer. I also saw how BLE overhead limits real-time streaming rates and why
+                storing data locally before transmission enables higher sampling rates and more
+                reliable data collection.
                 </p>
                 
                 <p>
-                The main challenges was debugging notification handlers and ensuring data was not
-                lost when sending data at higher rates. These issues were resolved by adding buffering
-                on the Artemis and using asynchronous handling in Python. Overall, this lab clarified
-                the tradeoffs between real-time and buffered communication and reinforced the
-                importance of structuring both code and data flow carefully.
+                The main challenges involved debugging notification handlers and preventing data loss
+                when sending data at higher rates. These issues were resolved by buffering data on the
+                Artemis and using asynchronous handling in Python. Over the course of the lab, I also
+                sharpened my index-based HTML formatting skills while organizing results and
+                creatin the write-up.
                 </p>
       
     </div>

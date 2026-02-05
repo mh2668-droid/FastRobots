@@ -292,8 +292,12 @@
 
 
 
-    <div class="card">
+    
       <h3>Tasks</h3>
+
+
+
+      <div class="media">
 
       <h4>Task 1: ECHO Command</h4>
       <p>
@@ -335,11 +339,13 @@
 
       <img class="img-small" src="echo.png" alt="Serial monitor showing RX wrote and Echo reply for the ECHO command">
 
+      </div>
+
 
 
       <p>   </p>
     
-
+      
       <h4>Task 2: Send Three Floats</h4>
 
       <p>
@@ -745,86 +751,60 @@
 
             <h4>Task 8: Real-Time Streaming vs Buffered Data Transfer</h4>
 
+        
+
             <p>
-            In this lab, I explored two different ways of sending data from the Artemis to my laptop:
-            sending data in real time as it is generated, and storing data locally on the Artemis before
-            sending it all at once. Each approach has different advantages depending on the situation.
-            </p>
-            
-            <h5>Real-Time Streaming</h5>
-            <p>
-            With real-time streaming, the Artemis sends each data point over BLE immediately after it is
-            recorded. This makes it possible to observe the system state live from the laptop, which can
-            be useful for debugging, visualization, or applications that require immediate feedback.
-            </p>
-            
-            <p>
-            The main drawback is that BLE communication is relatively slow. From Task 5, I measured an
-            effective rate of about <strong>41.5 messages per second</strong>, corresponding to roughly
-            <strong>0.28 KiB/s</strong> of data throughput. Because each data point is sent individually, the BLE
-            overhead limits how fast data can be streamed and reduces the achievable sampling rate.
-            </p>
-            
-    
-            <h5>Buffered Data Collection and Transfer</h5>
-            <p>
-            In the buffered approach, data is first stored in arrays on the Artemis and only transmitted
-            after data collection is complete. This separates data recording from BLE communication.
-            </p>
-            
-            <p>
-            This method allows the Artemis to record data much faster than it can send it over BLE.
-            In Tasks 6 and 7, the board recorded timestamped data at approximately <strong>50 Hz</strong>, which
-            was limited by loop timing and sensor delays rather than BLE throughput. Once recording
-            finished, the stored data was sent efficiently in a batch.
-            </p>
-            
-            <p>
-            The main disadvantage of this approach is that the data is not available in real time and
-            that the amount of data that can be recorded is limited by the board’s memory. However, it
-            is well suited for data logging and offline analysis where higher resolution is required.
-            </p>
-            
-            <h5>Recording Speed Comparison</h5>
-            <p>
-            Comparing the two methods, buffered recording is significantly faster than real-time
-            streaming. While BLE streaming achieved about <strong>41.5 messages per second</strong>, buffered
-            recording captured data at approximately <strong>50 samples per second</strong> without being
-            constrained by BLE communication. This shows that separating data acquisition from data
-            transfer allows for higher sampling rates.
-            </p>
-            
-            <h5>Memory Limitations</h5>
-            <p>
-            The Artemis board has <strong>384 kB (393,216 bytes)</strong> of RAM. In Task 7, each stored data point
-            consisted of a timestamp and a temperature reading:
-            </p>
-            
-            <ul>
-              <li>Timestamp (<code>unsigned long</code>): 4 bytes</li>
-              <li>Temperature (<code>float</code>): 4 bytes</li>
-            </ul>
-            
-            <p>
-            This results in <strong>8 bytes per data point</strong>. Ignoring memory used by the program and stack,
-            the theoretical maximum number of stored data points is:
-            </p>
-            
-            <p>
-            <code>393,216 bytes / 8 bytes ≈ 49,000 data points</code>
-            </p>
-            
-            <p>
-            In practice, fewer samples can be stored due to memory used by the BLE stack and other
-            variables, but this still allows tens of thousands of samples to be recorded before
-            transmission.
-            </p>
-            
-            <p>
-            Overall, I think real-time streaming is more useful for live monitoring and feedback, while buffered
-            data transfer is better for collecting high-resolution data for later analysis.
+            In this lab, I compared two methods for sending data from the Artemis to the laptop:
+            real-time streaming and buffered data collection followed by batch transfer.
+            Each method has different trade-offs in speed, responsiveness, and memory usage.
             </p>
 
+            <h5>Real-Time Streaming</h5>
+            <p>
+            In real-time streaming, the Artemis sends each data point over BLE immediately after
+            it is recorded. This allows live observation of the system state, which is useful
+            for debugging, visualization, and applications that require immediate feedback.
+            </p>
+
+            <p>
+            The main limitation is BLE overhead. From Task 5, the effective streaming rate was
+            approximately <strong>41.5 messages per second</strong>, corresponding to about
+            <strong>0.28 KiB/s</strong>. Because each data point is sent individually, the BLE
+            communication limits the achievable sampling rate.
+            </p>
+
+            <h5>Buffered Data Collection and Transfer</h5>
+            <p>
+            In the buffered approach, data is first stored in arrays on the Artemis and sent only
+            after recording is complete. This decouples data acquisition from BLE communication.
+            </p>
+
+            <p>
+            Using this method, the Artemis recorded timestamped data at approximately
+            <strong>50 Hz</strong>, limited mainly by loop timing and sensor delays rather than BLE.
+            After recording, the data was transferred efficiently in a batch. The drawback is
+            that data is not available in real time and storage is limited by onboard memory.
+            </p>
+
+            <h5>Recording Speed and Memory Considerations</h5>
+            <p>
+            Buffered recording is significantly faster than real-time streaming because it avoids
+            BLE overhead during data acquisition. This makes it better suited for data logging and
+            offline analysis.
+            </p>
+
+            <p>
+            The Artemis Nano has <strong>384 kB (393,216 bytes)</strong> of RAM. In Task 7, each data
+            sample consisted of a timestamp and temperature value (4 bytes each), totaling
+            <strong>8 bytes per sample</strong>. This allows for roughly
+            <strong>49,000 samples</strong> in theory, though fewer are possible in practice due to
+            program and BLE memory usage.
+            </p>
+
+            <p>
+            Overall, real-time streaming is best for live monitoring and feedback, while buffered
+            data transfer is more effective for collecting high-resolution data for later analysis.
+            </p>
             <p>   </p>
         
         <h4>Task 9: Effective Data Rate and BLE Overhead</h4>
@@ -890,7 +870,7 @@
         </section>
 
         <p>   </p>
-        
+
         <h4>Task 10: Reliability at High Data Rates</h4>
 
         <p>

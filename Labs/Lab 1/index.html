@@ -193,63 +193,66 @@
 
       <h4>Setup</h4>
       <p>
-  I first set up the laptop and the Artemis Nano so they could reliably communicate over BLE. On the laptop, I created a Python environment for BLE and installed the required packages from the lab codebase. Before attempting to connect, I generated a unique BLE service UUID in Python (using <code>uuid4()</code>) and updated the same service UUID in both <code>ble_arduino.ino</code> and <code>connection.yaml</code> so my board would not conflict with other devices in the lab. On the Artemis side, I then uploaded the provided <code>ble_arduino.ino</code> sketch, which initializes BLE, defines the GATT service/characteristics, and starts advertising.
-</p>
+        I set up my laptop and the RedBoard Artemis Nano to communicate over Bluetooth Low Energy (BLE) using the provided lab codebase. On my laptop, I created a Python environment and installed the BLE-related packages required to run the Jupyter notebook workflows.
+      </p>
 
-<p>
-  After uploading <code>ble_arduino.ino</code>, the Artemis started advertising and printed its BLE MAC address in the Serial Monitor (e.g., <code>Advertising BLE with MAC: c0:81:b0:24:1:64</code>). This confirmed that BLE initialized correctly and the board was discoverable.
-</p>
+      <p>
+        Before connecting, I generated a unique BLE <strong>service UUID</strong> once in Python (using <code>uuid4()</code>) and copied that same service UUID into both <code>ble_arduino.ino</code> and <code>connection.yaml</code>. This prevents my board’s BLE service from conflicting with other students’ devices in the lab.
+      </p>
 
-<p>
-  I copied this Artemis MAC address into <code>connection.yaml</code>, so the Python client can connect to the correct device.
-</p>
+      <p>
+        Next, I uploaded the provided <code>ble_arduino.ino</code> sketch to the Artemis. After upload, the board initialized BLE, started advertising, and printed its MAC address in the Serial Monitor (for example,
+        <code>Advertising BLE with MAC: c0:81:b0:24:1:64</code>). I then copied this MAC address into <code>connection.yaml</code> so the Python client connects to the correct device.
+      </p>
 
-<p>
-  Next, on the laptop side I initialized the Python BLE client and connected to the Artemis using the provided codebase:
-</p>
+      <p>
+        Finally, I initialized the Python BLE controller and connected to the Artemis:
+      </p>
 
-<p>
-  Once the connection succeeded, the Arduino Serial Monitor printed the central device address (e.g., <code>Connected to: 74:a6:cd:cf:8:82</code>), confirming that my laptop had connected to the Artemis over BLE.
-</p>
-
-<pre><code class="language-python"># Get Artemis BLE controller
+      <pre><code class="language-python"># Get Artemis BLE controller
 ble = get_ble_controller()
 
 # Connect to the Artemis device
 ble.connect()</code></pre>
 
+      <p>
+        Once connected, the Arduino Serial Monitor printed the central device address (for example,
+        <code>Connected to: 74:a6:cd:cf:8:82</code>), confirming my laptop successfully connected to the Artemis over BLE.
+      </p>
+
       <img class="img-small" src="macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
-      <p class="muted">Serial Monitor output confirming BLE advertising and the Artemis MAC address.</p>
+      <p class="muted">Serial Monitor output confirming BLE advertising (MAC printed) and a successful BLE connection.</p>
 
       <div style="margin-top: 28px;"></div>
       <h4>Configuration</h4>
       <p>
-        To make sure my Python client connects to the correct board and the correct BLE interface, I updated <code>connection.yaml</code>.
-        This file stores the Artemis MAC address, the BLE service UUID, and the UUIDs for each characteristic.
+        To ensure my Python client talks to the correct board and BLE interface, I updated <code>connection.yaml</code> with my Artemis MAC address and the UUIDs used by my BLE service/characteristics.
       </p>
+
       <p>
-        I generated a unique BLE service UUID in Python using <code>uuid4()</code> and used the same UUID in both the Arduino sketch and <code>connection.yaml</code>.
+        I generated the service UUID in Python using <code>uuid4()</code>, then used that same service UUID in both the Arduino sketch and <code>connection.yaml</code>.
       </p>
+
       <img class="img-small" src="jp.png" alt="uuid4() used to generate a BLE service UUID">
       <p class="muted">Generating a unique BLE service UUID in Python.</p>
 
       <p>
-        The service exposes these characteristics, which define how data moves between the laptop and the Artemis:
+        The BLE service exposes three key characteristics that define the data flow:
       </p>
       <ul>
         <li><code>TX_CMD_STRING</code>: laptop → Artemis (write). Used to send command strings from Python.</li>
-        <li><code>RX_STRING</code>: Artemis → laptop (notify/read). Used to send string replies and streamed data.</li>
-        <li><code>RX_FLOAT</code>: Artemis → laptop (notify/read). Reserved for numeric data (used in later/extended tasks).</li>
+        <li><code>RX_STRING</code>: Artemis → laptop (notify/read). Used for string replies and streamed data.</li>
+        <li><code>RX_FLOAT</code>: Artemis → laptop (notify/read). Used for numeric data (used in later tasks).</li>
       </ul>
 
       <p>
-        The same service UUID and characteristic UUIDs are defined in the Arduino sketch so the Artemis advertises the expected BLE interface.
+        These same UUIDs are defined in <code>ble_arduino.ino</code> so the Artemis advertises the expected BLE interface.
       </p>
       <img class="img-small" src="inosketch.png" alt="Arduino sketch showing BLE service and characteristic UUID definitions">
       <p class="muted">Arduino sketch: service UUID and characteristic UUID definitions.</p>
 
       <p>
-        Finally, I copied the MAC address, service UUID, and characteristic UUIDs into <code>connection.yaml</code> so the Python client connects to the correct device and characteristics.
+        With the MAC address and UUIDs set, the Python client can connect and read/write the correct BLE characteristics.
       </p>
       <img class="img-small" src="yamlsk.png" alt="connection.yaml showing Artemis address, BLE service UUID, and characteristic UUIDs">
       <p class="muted">connection.yaml: Artemis MAC address, service UUID, and characteristic UUIDs.</p>
@@ -258,14 +261,11 @@ ble.connect()</code></pre>
 
       <h4>Code Base</h4>
       <p>
-        The provided BLE codebase has two parts: an Arduino program on the Artemis (BLE peripheral) and a Python client on the laptop (BLE central).
-        The Python client connects using the MAC address and service UUID, then sends commands by writing to <code>TX_CMD_STRING</code>.
-        On the Artemis, the sketch reads the received command, parses it, and runs the corresponding handler.
+        The provided BLE codebase has two parts: the Arduino sketch on the Artemis (BLE peripheral) and the Python notebook/client on the laptop (BLE central). The Artemis advertises a BLE service and characteristics. The laptop connects using the MAC address and service UUID and sends commands by writing to <code>TX_CMD_STRING</code>.
       </p>
 
       <p>
-        After executing a command, the Artemis returns results to the laptop using BLE notifications (typically through <code>RX_STRING</code>).
-        In Python, a notification handler can be registered to receive these messages asynchronously, which is especially useful for streaming data and measuring data rate.
+        On the Artemis side, the sketch checks whether <code>TX_CMD_STRING</code> was written, parses the command, and runs the corresponding handler. Results are sent back to the laptop by writing to <code>RX_STRING</code>, which the laptop can read directly or receive asynchronously using notifications (used later for streaming and data rate measurement).
       </p>
     </div>
 

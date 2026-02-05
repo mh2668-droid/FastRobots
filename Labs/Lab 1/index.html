@@ -559,6 +559,99 @@
 
 
         <h4>Task 6: Time Storage</h4>
+    
+        <p>
+        The objective of this task was to store time stamp data locally on the Artemis using a global buffer, then transmit the buffered data to the laptop in a single batch. This approach avoids continuous streaming and allows verification that all recorded data points were successfully transferred over BLE.
+        </p>
+        
+        <p>
+        On the Artemis side, I created a global array to store time stamps along with a counter to track how many values were recorded. When the <code>RECORD_TIME_DATA</code> command is received, the Artemis records <code>millis()</code> values for a fixed duration or until the buffer is full. These values are stored locally without being sent immediately.
+        </p>
+
+        <p>
+        After recording is complete, the <code>SEND_TIME_DATA</code> command iterates through the buffer and sends each stored time stamp to the laptop as a string prefixed with <code>T:</code>. Once all values are transmitted, the Artemis sends a <code>DONE</code> message to signal completion.
+        </p>
+
+        <pre><code class="language-cpp">
+        case RECORD_TIME_DATA:
+        {
+            time_count = 0;
+            unsigned long start_ms = millis();
+
+            while ((millis() - start_ms < 5000) && (time_count < TIME_BUF_LEN)) {
+                BLE.poll();
+                time_buf[time_count++] = millis();
+            }
+
+            Serial.print("Recorded count = ");
+            Serial.println(time_count);
+            break;
+        }
+
+        case SEND_TIME_DATA:
+        {
+            Serial.print("Sending count = ");
+            Serial.println(time_count);
+
+            for (int i = 0; i < time_count; i++) {
+                BLE.poll();
+                tx_estring_value.clear();
+                tx_estring_value.append("T:");
+                tx_estring_value.append((int)time_buf[i]);
+                tx_characteristic_string.writeValue(tx_estring_value.c_str());
+                delay(5);
+            }
+
+            tx_estring_value.clear();
+            tx_estring_value.append("DONE");
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+            Serial.println("Sent DONE");
+            break;
+        }
+        </code></pre>
+
+        <h4>Buffered Notification Handler (Python)</h4>
+        <p>
+        On the Python side, I used a buffered BLE notification handler to receive the burst of messages asynchronously. Incoming time values were appended to a list, and a completion event was triggered once the <code>DONE</code> message was received.
+        </p>
+
+        <pre><code class="language-text">
+        on notification received:
+            convert BLE bytes to string
+            if message starts with "T:":
+                parse time and append to list
+            if message == "DONE":
+                mark transfer complete
+        </code></pre>
+
+        <h4>Results</h4>
+        <p>
+        After issuing the <code>RECORD_TIME_DATA</code> command and allowing the buffer to fill, I sent the <code>SEND_TIME_DATA</code> command from Python. The laptop successfully received all buffered time values followed by the <code>DONE</code> message.
+        </p>
+
+        <pre><code class="language-text">
+        Received: 1000
+        First 5: [623053, 623053, 623053, 623053, 623053]
+        Last 5: [623104, 623104, 623104, 623104, 623104]
+        </code></pre>
+
+        <img class="img-small" src="Screenshot 2026-02-04 at 10.45.58 PM.png"
+            alt="Python output confirming buffered data received">
+        <p class="muted">
+        Python output confirming that all buffered time values were received.
+        </p>
+
+        <img class="img-small" src="Screenshot 2026-02-04 at 10.45.46 PM.png"
+            alt="Arduino Serial Monitor showing buffered recording and send">
+        <p class="muted">
+        Arduino Serial Monitor showing buffered time recording and bulk transmission.
+        </p>
+
+        <h4>Discussion</h4>
+        <p>
+        This task demonstrates the advantage of buffering data on the embedded device before transmission. Compared to continuous streaming, buffered transfer provides better control over data integrity and ensures that all recorded values are delivered successfully. The use of a buffered notification handler on the Python side allows large data transfers to be handled reliably over BLE.
+        </p>
 
 
 

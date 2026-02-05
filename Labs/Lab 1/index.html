@@ -330,47 +330,53 @@
 
 
      
+    
+
       <h4>Task 2: Send Three Floats</h4>
 
-        <p>
-        In this task, I implemented and tested a command that sends three floating-point values
-        from the laptop to the Artemis over BLE. The goal was to verify that numerical data can
-        be transmitted, parsed, and interpreted correctly on the microcontroller.
-        </p>
+      <p>
+      The goal of this task was to confirm that the BLE command channel can reliably transmit
+      numeric values (floats) from the laptop to the Artemis, and that the Artemis can parse the
+      payload into individual numbers.
+      </p>
+      
+      <p>
+      First, I sent three floats using the <code>SEND_THREE_FLOATS</code> command.
+      The three values were packed into a single string and separated by the <code>|</code> delimiter
+      so the provided <code>RobotCommand</code> parser could tokenize them in order.
+      </p>
+      
+      <pre><code class="language-python">ble.send_command(CMD.SEND_THREE_FLOATS, "1.1|2.2|3.3")</code></pre>
+      
+      <p>
+      On the Artemis side, the handler calls <code>get_next_value()</code> three times to extract the
+      floats sequentially and then prints them to the Serial Monitor to verify correct decoding.
+      </p>
+      
+      <h5>Relevant Code Snippet (Arduino)</h5>
+      <pre><code class="language-cpp">case SEND_THREE_FLOATS:
+        float f1, f2, f3;
+      
+        success = robot_cmd.get_next_value(f1); if (!success) return;
+        success = robot_cmd.get_next_value(f2); if (!success) return;
+        success = robot_cmd.get_next_value(f3); if (!success) return;
+      
+        Serial.print("Three floats received: ");
+        Serial.print(f1); Serial.print(", ");
+        Serial.print(f2); Serial.print(", ");
+        Serial.println(f3);
+        break;</code></pre>
+      
+      <p>
+      After running the command, the Serial Monitor showed both the received command payload and
+      the parsed float values, confirming that the message was delivered over BLE and decoded correctly.
+      </p>
+      
+      <img class="img-small" src="float.png" alt="Serial output showing RX wrote and three floats received">
+      <p class="muted">
+      Serial Monitor output: Artemis receives <code>2:1.1|2.2|3.3</code> and parses the three floats as <code>1.10, 2.20, 3.30</code>.
+      </p>
 
-        <h5>Implementation</h5>
-        <p>
-        From Python, I sent three floats as a single command payload using the
-        <code>SEND_THREE_FLOATS</code> command. The values were separated by the
-        <code>|</code> delimiter, which is handled by the provided <code>RobotCommand</code>
-        parser on the Artemis.
-        </p>
-
-        <pre><code class="language-python">
-        ble.send_command(CMD.SEND_THREE_FLOATS, "1.1|2.2|3.3")
-        </code></pre>
-
-        <p>
-        On the Artemis side, the command handler extracts each value sequentially using
-        <code>get_next_value()</code> and stores them as floating-point variables.
-        </p>
-
-        <h5>Results</h5>
-        <p>
-        After sending the command, the Artemis successfully parsed and printed all three values
-        to the Serial Monitor, confirming correct reception and decoding of the data.
-        </p>
-
-        <img class="img-small" src="float.png" alt="Serial output showing three floats received">
-
-        <pre><code>
-        Three floats received: 1.10, 2.20, 3.30
-        </code></pre>
-
-        <p class="muted">
-        Serial Monitor output confirming that three floating-point values were received and
-        parsed correctly on the Artemis.
-        </p>
 
 
 

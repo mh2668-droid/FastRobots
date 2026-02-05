@@ -714,8 +714,7 @@
         <code>D:&lt;time_ms&gt;,&lt;temp_x100&gt;</code>. After all samples are sent, the Artemis transmits a <code>DONE</code> message.
         </p>
 
-        <pre><code class="language-cpp">
-        case GET_TEMP_READINGS: {
+        <pre><code class="language-cpp">case GET_TEMP_READINGS: {
             Serial.println("Entered GET_TEMP_READINGS");
             Serial.print("Sending paired samples = ");
             Serial.println(time_count);
@@ -736,8 +735,7 @@
             delay(20);
             tx_characteristic_string.writeValue("DONE");
             break;
-        }
-        </code></pre>
+        }</code></pre>
 
         <h4>Buffered Notification Handler (Python)</h4>
         <p>
@@ -944,25 +942,22 @@
       <h3>Conclusion</h3>
       <p>
         <p>
-            This lab helped me understand how BLE communication works between
-            the Artemis board and a laptop, including command-based messaging, notifications,
-            and the performance limits of BLE. I learned how BLE overhead affects data rate and
-            why buffering data on the device can significantly improve sampling performance.
-            </p>
-            
-            <p>
-            The main challenges were debugging BLE notifications, handling asynchronous data
-            in Python, and ensuring data was not dropped during high-rate transfers. These were
-            addressed by carefully managing notification handlers, adding flow control in the
-            Arduino code, and separating data recording from data transmission.
-            </p>
-            
-            <p>
-            Overall, this lab clarified the trade-offs between real-time streaming and buffered
-            data transfer and provided a solid foundation for collecting and analyzing sensor
-            data reliably in later labs.
-            </p>
-      </p>
+        
+                In this lab, I learned how Bluetooth Low Energy communication works between the Artemis
+                board and my laptop, including command-based messaging, notifications, and buffered
+                data transfer. I saw firsthand how BLE overhead limits real-time streaming rates and
+                why storing data locally before transmission allows for higher sampling rates and more
+                reliable data collection. And of course I sh
+                </p>
+                
+                <p>
+                The main challenges was debugging notification handlers and ensuring data was not
+                lost when sending data at higher rates. These issues were resolved by adding buffering
+                on the Artemis and using asynchronous handling in Python. Overall, this lab clarified
+                the tradeoffs between real-time and buffered communication and reinforced the
+                importance of structuring both code and data flow carefully.
+                </p>
+      
     </div>
 
     <div class="footer">

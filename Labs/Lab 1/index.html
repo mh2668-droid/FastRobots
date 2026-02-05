@@ -279,7 +279,56 @@ ble.connect()</code></pre>
       <h3>Tasks</h3>
 
       <h4>Task 1: ECHO Command</h4>
-      <p><!-- Laptop sends string, Artemis replies augmented string --></p>
+
+      <h5>Goal</h5>
+      <p>
+        Send a string from the laptop to the Artemis using the <code>ECHO</code> command, then read back an
+        “augmented” reply from the Artemis over the BLE string characteristic.
+      </p>
+
+      <h5>Implementation</h5>
+      <p>
+        From Python (Jupyter), I sent a test payload using:
+      </p>
+      <pre><code class="language-python">ble.send_command(CMD.ECHO, "HiHello")</code></pre>
+
+      <p>
+        On the Artemis side, the command is received through the writeable command characteristic, parsed by
+        <code>RobotCommand</code>, and the next token (the string) is extracted into <code>char_arr</code>. I then built
+        the response using <code>EString</code> and wrote it back to the BLE TX string characteristic.
+      </p>
+
+      <h5>Relevant Code Snippet (Arduino)</h5>
+      <pre><code class="language-cpp">case ECHO:
+  char char_arr[MAX_MSG_SIZE];
+
+  // Extract the next value from the command string as a character array
+  success = robot_cmd.get_next_value(char_arr);
+  if (!success) return;
+
+  // Build augmented reply
+  tx_estring_value.clear();
+  tx_estring_value.append("Robot says -> ");
+  tx_estring_value.append(char_arr);
+  tx_estring_value.append(" :)");
+
+  // Send it back over BLE (TX string characteristic)
+  tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+  // Debug over USB serial
+  Serial.print("Echo reply: ");
+  Serial.println(tx_estring_value.c_str());
+  break;</code></pre>
+
+      <h5>Results</h5>
+      <p>
+        After sending <code>HiHello</code> from Python, the laptop received the modified reply
+        <code>Robot says -> HiHello :)</code>. The Serial Monitor also confirmed the command reception and the
+        generated reply.
+      </p>
+
+      <img class="img-small" src="echo.png" alt="Serial monitor showing RX wrote and Echo reply for the ECHO command">
+      <p class="muted">Serial Monitor output for the ECHO command (received payload and augmented reply).</p>
 
       <h4>Task 2: GET_TIME_MILLIS</h4>
       <p><!-- Artemis replies with T:123456 --></p>

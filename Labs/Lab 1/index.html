@@ -373,14 +373,67 @@
       </p>
       
       <img class="img-small" src="float.png" alt="Serial output showing RX wrote and three floats received">
-      <p class="muted">
-      Serial Monitor output: Artemis receives <code>2:1.1|2.2|3.3</code> and parses the three floats as <code>1.10, 2.20, 3.30</code>.
-      </p>
+
 
 
 
 
       <h4>Task 3: GET_TIME_MILLIS</h4>
+      
+
+        <p>
+        The goal of this task was to make the Artemis return its current timestamp
+        back to the laptop as a formatted string. 
+        </p>
+
+        <p>
+        From Python, I triggered the <code>GET_TIME_MILLIS</code> command, then immediately read back the response
+        string from the Artemis using the BLE string characteristic. The expected format is <code>T:&lt;millis&gt;</code>.
+        </p>
+
+        <pre><code class="language-python">ble.send_command(CMD.GET_TIME_MILLIS, "")
+        s = ble.receive_string(ble.uuid['RX_STRING'])
+        print("Python received:", s)</code></pre>
+
+        <p>
+        On the Artemis side, the command handler calls <code>millis()</code> to get the current time (ms),
+        builds a string with the prefix <code>T:</code>, then writes it to the BLE TX string characteristic
+        so the laptop can read it.
+        </p>
+
+        <h5>Relevant Code Snippet (Arduino)</h5>
+        <pre><code class="language-cpp">case GET_TIME_MILLIS: {
+        unsigned long t = millis();
+
+        tx_estring_value.clear();
+        tx_estring_value.append("T:");
+        tx_estring_value.append((int)t);
+
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+        Serial.print("Sent time: ");
+        Serial.println(t);
+        break;
+        }</code></pre>
+
+        <p>
+        After sending the command, the laptop received a timestamp string in the expected format.
+        The Arduino Serial Monitor also printed the same timestamp, confirming the value sent over BLE.
+        </p>
+
+        <div class="media">
+        <strong>Observed output:</strong>
+        <ul>
+            <li>Python received: <code>T:10929914</code></li>
+            <li>Artemis Serial Monitor: <code>Sent time: 10929914</code></li>
+        </ul>
+        </div>
+
+
+
+
+
+
       <p><!-- Artemis replies with T:123456 --></p>
 
       <h4>Task 4: Notification Handler</h4>

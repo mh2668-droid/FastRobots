@@ -432,10 +432,6 @@
 
 
 
-
-
-
-      <h4>Task 4: Notification Handler</h4>
       <h4>Task 4: Notification Handler</h4>
 
         <p>
@@ -465,13 +461,142 @@
         These timestamps are stored for later analysis.
         </p>
 
-        <p>
-        This notification-based approach allows the Artemis to push data to the laptop
-        without requiring repeated read commands from Python.
-        </p>
-      <p><!-- Callback parses time from T:... --></p>
+
 
       <h4>Task 5: Time Streaming and Data Rate</h4>
+
+        <p>
+        In this task, I measured how fast the Artemis can stream data to the laptop using
+        Bluetooth Low Energy notifications. The Artemis continuously sent timestamp
+        values for a fixed duration, while the laptop collected and analyzed the data
+        asynchronously using the notification handler from Task 4.
+        </p>
+
+        <p>
+        From Python, I triggered the streaming behavior and collected the received
+        timestamps for several seconds:
+        </p>
+
+        <h5>Python Code Snippet</h5>
+        <pre><code class="language-python">
+        import asyncio
+
+        # clear old data
+        times_ms.clear()
+
+        ble.send_command(CMD.GET_TIME_RATE, "")
+
+        # wait while notifications arrive
+        await asyncio.sleep(6.0)
+
+        print("Messages received:", len(times_ms))
+        print("First 5:", times_ms[:5])
+        print("Last 5:", times_ms[-5:])
+        </code></pre>
+
+        <p>
+        On the Artemis side, the <code>GET_TIME_RATE</code> command sends the current time
+        (in milliseconds) at a fixed interval using BLE notifications. The loop runs for
+        approximately 5 seconds and throttles transmissions to avoid overwhelming the
+        BLE stack.
+        </p>
+
+        <h5>Arduino Code Snippet</h5>
+        <pre><code class="language-cpp">
+        case GET_TIME_RATE:
+        {
+        unsigned long start_ms = millis();
+        unsigned long next_send_ms = start_ms;
+        const unsigned long SEND_PERIOD_MS = 20; // ~50 Hz
+
+        while (millis() - start_ms < 5000) {
+            BLE.poll();
+
+            unsigned long now = millis();
+            if (now >= next_send_ms) {
+            tx_estring_value.clear();
+            tx_estring_value.append("T:");
+            tx_estring_value.append((int)now);
+            tx_characteristic_string.writeValue(
+                tx_estring_value.c_str()
+            );
+
+            next_send_ms = now + SEND_PERIOD_MS;
+            }
+        }
+        break;
+        }
+        </code></pre>
+
+        <h5>Results</h5>
+
+        <p>
+        During one run, the Python client received <strong>207 timestamp messages</strong>.
+        The first and last timestamps were:
+        </p>
+
+        <ul>
+        <li>First timestamp: <code>50465 ms</code></li>
+        <li>Last timestamp: <code>55456 ms</code></li>
+        </ul>
+
+        <p>
+        This corresponds to a total streaming duration of:
+        </p>
+
+        <pre><code>
+        55456 − 50465 = 4991 ms ≈ 4.99 s
+        </code></pre>
+
+        <p>
+        The effective message rate was:
+        </p>
+
+        <pre><code>
+        207 messages / 4.99 s ≈ 41.5 messages per second
+        </code></pre>
+
+        <p>
+        Each message had the format <code>"T:xxxxx"</code>, which is approximately
+        7 bytes per message. The effective BLE payload throughput was therefore:
+        </p>
+
+        <pre><code>
+        41.5 messages/s × 7 bytes ≈ 290 bytes/s ≈ 0.28 KiB/s
+        </code></pre>
+
+        <p>
+        This experiment shows that BLE notifications provide a stable but low-bandwidth
+        data stream, which is well-suited for telemetry and debugging but not for
+        high-rate data transmission.
+        </p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       <p>
         <!-- Describe: stream timestamps for N seconds, count messages,
              compute messages/sec and KiB/sec -->

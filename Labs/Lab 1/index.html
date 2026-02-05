@@ -192,7 +192,7 @@
     </div>
 
     <div class="card">
-      <pre>
+      
       <h3>Prelab</h3>
 
       <h4>Setup</h4>
@@ -253,7 +253,7 @@
       
       <h4>Code Base</h4>
       <p>
-        The provided BLE codebase consists of two main components: an Arduino sketch running on the Artemis (acting as a BLE peripheral) and a Python notebook/client running on the laptop (acting as a BLE central).
+        The provided BLE codebase consists of two main components: an Arduino sketch running on the Artemis and a Python notebook/client running on the laptop.
       </p>
       
       <p>
@@ -271,8 +271,8 @@
       </p>
       <img class="img-small" src="connected.png" alt="connected to address">     
       <p>
-        After connecting, the laptop sends commands by writing to <code>TX_CMD_STRING</code>. The Artemis checks for incoming writes, parses the command, executes the corresponding handler, and returns results by writing to <code>RX_STRING</code>, which the laptop can read directly or receive asynchronously using BLE notifications.
-      </p></pre>
+        After connecting, the laptop sends commands by writing to <code>TX_CMD_STRING</code>. The Artemis checks for incoming writes, parses the command, executes the corresponding handler, and returns results by writing to <code>RX_STRING</code>, then the laptop can read directly or receive asynchronously using BLE notifications.
+      </p>
       
       
     

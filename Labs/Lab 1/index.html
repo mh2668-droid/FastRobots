@@ -423,10 +423,9 @@
 
         <div class="media">
         <strong>Observed output:</strong>
-        <ul>
-            <li>Python received: <code>T:10929914</code></li>
-            <li>Artemis Serial Monitor: <code>Sent time: 10929914</code></li>
-        </ul>
+        <img class="img-small" src="31.png" alt="31">
+        <img class="img-small" src="32.png" alt="32">
+        
         </div>
 
 
@@ -480,13 +479,8 @@
         <h5>Python Code Snippet</h5>
         <pre><code class="language-python">
         import asyncio
-
-        # clear old data
         times_ms.clear()
-
         ble.send_command(CMD.GET_TIME_RATE, "")
-
-        # wait while notifications arrive
         await asyncio.sleep(6.0)
 
         print("Messages received:", len(times_ms))
@@ -507,11 +501,10 @@
         {
         unsigned long start_ms = millis();
         unsigned long next_send_ms = start_ms;
-        const unsigned long SEND_PERIOD_MS = 20; // ~50 Hz
+        const unsigned long SEND_PERIOD_MS = 20; 
 
         while (millis() - start_ms < 5000) {
             BLE.poll();
-
             unsigned long now = millis();
             if (now >= next_send_ms) {
             tx_estring_value.clear();
@@ -520,15 +513,12 @@
             tx_characteristic_string.writeValue(
                 tx_estring_value.c_str()
             );
-
             next_send_ms = now + SEND_PERIOD_MS;
             }
         }
         break;
         }
         </code></pre>
-
-        <h5>Results</h5>
 
         <p>
         During one run, the Python client received <strong>207 timestamp messages</strong>.
@@ -539,37 +529,36 @@
         <li>First timestamp: <code>50465 ms</code></li>
         <li>Last timestamp: <code>55456 ms</code></li>
         </ul>
+        <img class="img-small" src="5.png" alt="input">
 
         <p>
         This corresponds to a total streaming duration of:
         </p>
 
-        <pre><code>
+        <pre>
         55456 − 50465 = 4991 ms ≈ 4.99 s
-        </code></pre>
+       </pre>
 
         <p>
         The effective message rate was:
         </p>
 
-        <pre><code>
+        <pre>
         207 messages / 4.99 s ≈ 41.5 messages per second
-        </code></pre>
+        </pre>
 
         <p>
         Each message had the format <code>"T:xxxxx"</code>, which is approximately
         7 bytes per message. The effective BLE payload throughput was therefore:
         </p>
 
-        <pre><code>
+        <pre>
         41.5 messages/s × 7 bytes ≈ 290 bytes/s ≈ 0.28 KiB/s
-        </code></pre>
+        </pre>
 
-        <p>
-        This experiment shows that BLE notifications provide a stable but low-bandwidth
-        data stream, which is well-suited for telemetry and debugging but not for
-        high-rate data transmission.
-        </p>
+
+
+        <h4>Task 6: Time Storage</h4>
 
 
 

@@ -434,9 +434,41 @@
 
 
 
-      <p><!-- Artemis replies with T:123456 --></p>
 
       <h4>Task 4: Notification Handler</h4>
+      <h4>Task 4: Notification Handler</h4>
+
+        <p>
+        In this task, I implemented a BLE notification handler in Python to receive string data
+        from the Artemis asynchronously, without explicitly requesting each message.
+        </p>
+
+        <p>
+        On the Python side, I subscribed to the <code>RX_STRING</code> BLE characteristic.
+        Whenever the Artemis writes a new string value, the notification handler is automatically
+        invoked.
+        </p>
+
+        <h5>Python Notification Handler</h5>
+        <pre><code class="language-python">times_ms = []
+
+        def notif_handler(uuid, byte_array):
+            msg = ble.bytearray_to_string(byte_array).strip()
+            if msg.startswith("T:"):
+                times_ms.append(int(msg[2:]))
+
+        ble.start_notify(ble.uuid['RX_STRING'], notif_handler)</code></pre>
+
+        <p>
+        The handler converts the incoming BLE bytes into a string, checks for the
+        <code>T:&lt;millis&gt;</code> format, and extracts the timestamp value.
+        These timestamps are stored for later analysis.
+        </p>
+
+        <p>
+        This notification-based approach allows the Artemis to push data to the laptop
+        without requiring repeated read commands from Python.
+        </p>
       <p><!-- Callback parses time from T:... --></p>
 
       <h4>Task 5: Time Streaming and Data Rate</h4>

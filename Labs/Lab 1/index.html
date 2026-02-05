@@ -216,8 +216,8 @@
       </div>
 
 
-      
-      
+
+      <div class="media">
       <h4>Configuration</h4>
       <p>
         Before attempting a BLE connection, I configured the identifiers needed for the laptop to communicate with the correct Artemis board and BLE interface.
@@ -255,6 +255,10 @@
       
       
       <div style="margin-top: 28px;"></div>
+
+      </div>
+
+      <div class="media">
       
       <h4>Code Base</h4>
       <p>
@@ -277,7 +281,7 @@
       <img class="img-small" src="connected.png" alt="connected to address">     
       <p>
         After connecting, the laptop sends commands by writing to <code>TX_CMD_STRING</code>. The Artemis checks for incoming writes, parses the command, executes the corresponding handler, and returns results by writing to <code>RX_STRING</code>, then the laptop can read directly or receive asynchronously using BLE notifications.
-      </p>
+      </p></div>
       
       
     
@@ -333,7 +337,7 @@
 
 
 
-     
+      <p>   </p>
     
 
       <h4>Task 2: Send Three Floats</h4>
@@ -379,7 +383,7 @@
       <img class="img-small" src="float.png" alt="Serial output showing RX wrote and three floats received">
 
 
-
+      <p>   </p>
 
 
       <h4>Task 3: GET_TIME_MILLIS</h4>
@@ -432,7 +436,7 @@
         </div>
 
 
-
+        <p>   </p>
 
       <h4>Task 4: Notification Handler</h4>
 
@@ -463,6 +467,7 @@
         These timestamps are stored for later analysis.
         </p>
 
+        <p>   </p>
 
 
       <h4>Task 5: Time Streaming and Data Rate</h4>
@@ -559,7 +564,7 @@
         41.5 messages/s × 7 bytes ≈ 290 bytes/s ≈ 0.28 KiB/s
         </p>
 
-
+        <p>   </p>
 
         <h4>Task 6: Time Storage</h4>
     
@@ -645,7 +650,7 @@
 
         <img class="img-small" src="62.png"
             alt="Arduino Serial Monitor showing buffered recording and send">
-
+        <p>   </p>
 
 
         <h4>Task 7: Buffered Time + Temperature Pairs</h4>
@@ -736,7 +741,8 @@
             alt="Python output confirming buffered data received">
 
 
-    
+            <p>   </p>
+
             <h4>Task 8: Real-Time Streaming vs Buffered Data Transfer</h4>
 
             <p>
@@ -819,7 +825,7 @@
             data transfer is better for collecting high-resolution data for later analysis.
             </p>
 
-
+            <p>   </p>
         
         <h4>Task 9: Effective Data Rate and BLE Overhead</h4>
 
@@ -883,7 +889,8 @@
         </p>
         </section>
 
-       
+        <p>   </p>
+        
         <h4>Task 10: Reliability at High Data Rates</h4>
 
         <p>

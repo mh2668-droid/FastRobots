@@ -744,16 +744,15 @@
         On the Python side, I registered a notification handler that listens for incoming strings. Each data packet begins with <code>D:</code> and contains a comma-separated time stamp and temperature value scaled by 100. The handler parses these messages and appends values into two lists (<code>t_list</code> and <code>temp_list</code>). Once a <code>DONE</code> message is received, the transfer is treated as complete.
         </p>
 
-        <pre><code class="language-text">
-        on notification received:
+        <pre><code class="language-text">on notification received:
             convert BLE bytes to string
             if message starts with "D:":
                 parse time_ms and temp_x100
                 t_list.append(time_ms)
                 temp_list.append(temp_x100 / 100)
             if message == "DONE":
-                mark transfer complete
-        </code></pre>
+                mark transfer complete</code></pre>
+        
 
         <p>
         After recording data for ~5 seconds and requesting the paired readings, the laptop received the same number of time stamps and temperature values, confirming that the data remained aligned by index.
@@ -843,7 +842,7 @@
         </p>
 
         <h4>Arduino Implementation</h4>
-        <code class="language-cpp">
+        <pre><code class="language-cpp">
         case REPLY_5B:
         tx_characteristic_string.writeValue("ABCDE");
         break;
@@ -853,10 +852,10 @@
         memset(msg, 'A', 120);
         msg[120] = '\0';
         tx_characteristic_string.writeValue(msg);
-        break;</code>
+        break;</code></pre>
 
         <h4>Python Measurement (condensed)</h4>
-        <pre><code class="language-python"># handler timestamps replies
+        <pre><code class="language-python">
         def on_rx(uuid, b):
             rx_q.put_nowait((time.perf_counter_ns(),
                             len(ble.bytearray_to_string(b))))
@@ -944,7 +943,25 @@
     <div class="card">
       <h3>Conclusion</h3>
       <p>
-        <!-- What you learned, biggest debugging issue, how you solved it -->
+        <p>
+            This lab helped me understand how BLE communication works between
+            the Artemis board and a laptop, including command-based messaging, notifications,
+            and the performance limits of BLE. I learned how BLE overhead affects data rate and
+            why buffering data on the device can significantly improve sampling performance.
+            </p>
+            
+            <p>
+            The main challenges were debugging BLE notifications, handling asynchronous data
+            in Python, and ensuring data was not dropped during high-rate transfers. These were
+            addressed by carefully managing notification handlers, adding flow control in the
+            Arduino code, and separating data recording from data transmission.
+            </p>
+            
+            <p>
+            Overall, this lab clarified the trade-offs between real-time streaming and buffered
+            data transfer and provided a solid foundation for collecting and analyzing sensor
+            data reliably in later labs.
+            </p>
       </p>
     </div>
 

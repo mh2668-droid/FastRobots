@@ -871,6 +871,33 @@
         </p>
         </section>
 
+       
+        <h4>Task 10: Reliability at High Data Rates</h4>
+
+        <p>
+            When the Artemis sends data at a higher rate, the computer does not reliably receive every
+            message. As the transmission rate increases, BLE notifications begin to drop packets instead
+            of buffering them.
+        </p>
+
+        <p>
+            This behavior was observed during real-time streaming (Task 5), where fewer samples were
+            received than expected over a fixed time window. In contrast, when data was first stored on
+            the Artemis and then sent afterward (Tasks 6 and 7), all samples were consistently received,
+            as confirmed by matching counts and DONE markers.
+        </p>
+
+        <p>
+            BLE notifications are not guaranteed-delivery messages. If the Artemis publishes data faster
+            than the Python client can process it, older messages are lost.
+        </p>
+
+        <p>
+            In summary, real-time streaming over BLE becomes unreliable at high data rates, while buffered
+            data transfer is much more robust and should be used when complete data collection is required.
+        </p>
+        </section>
+
 
 
 

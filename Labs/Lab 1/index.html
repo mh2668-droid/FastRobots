@@ -713,8 +713,8 @@
         The command <code>GET_TEMP_READINGS</code> then iterates through both arrays and sends each paired sample as a single formatted string:
         <code>D:&lt;time_ms&gt;,&lt;temp_x100&gt;</code>. After all samples are sent, the Artemis transmits a <code>DONE</code> message.
         </p>
-
-        <pre><code class="language-cpp">case GET_TEMP_READINGS: {
+<pre><code class="language-cpp">
+            case GET_TEMP_READINGS: {
             Serial.println("Entered GET_TEMP_READINGS");
             Serial.print("Sending paired samples = ");
             Serial.println(time_count);

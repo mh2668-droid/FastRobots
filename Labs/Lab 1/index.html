@@ -563,7 +563,7 @@
         <p>
         The objective of this task was to store time stamp data locally on the Artemis using a global buffer, then transmit the buffered data to the laptop in a single batch. This approach avoids continuous streaming and allows verification that all recorded data points were successfully transferred over BLE.
         </p>
-        
+
         <p>
         On the Artemis side, I created a global array to store time stamps along with a counter to track how many values were recorded. When the <code>RECORD_TIME_DATA</code> command is received, the Artemis records <code>millis()</code> values for a fixed duration or until the buffer is full. These values are stored locally without being sent immediately.
         </p>
@@ -625,7 +625,6 @@
                 mark transfer complete
         </code></pre>
 
-        <h4>Results</h4>
         <p>
         After issuing the <code>RECORD_TIME_DATA</code> command and allowing the buffer to fill, I sent the <code>SEND_TIME_DATA</code> command from Python. The laptop successfully received all buffered time values followed by the <code>DONE</code> message.
         </p>
@@ -636,22 +635,15 @@
         Last 5: [623104, 623104, 623104, 623104, 623104]
         </code></pre>
 
-        <img class="img-small" src="Screenshot 2026-02-04 at 10.45.58 PM.png"
+        <img class="img-small" src="31.png"
             alt="Python output confirming buffered data received">
-        <p class="muted">
-        Python output confirming that all buffered time values were received.
-        </p>
 
-        <img class="img-small" src="Screenshot 2026-02-04 at 10.45.46 PM.png"
+
+        <img class="img-small" src="32.png"
             alt="Arduino Serial Monitor showing buffered recording and send">
-        <p class="muted">
-        Arduino Serial Monitor showing buffered time recording and bulk transmission.
-        </p>
 
-        <h4>Discussion</h4>
-        <p>
-        This task demonstrates the advantage of buffering data on the embedded device before transmission. Compared to continuous streaming, buffered transfer provides better control over data integrity and ensures that all recorded values are delivered successfully. The use of a buffered notification handler on the Python side allows large data transfers to be handled reliably over BLE.
-        </p>
+
+     
 
 
 

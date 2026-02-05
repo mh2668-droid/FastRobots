@@ -192,6 +192,7 @@
     </div>
 
     <div class="card">
+      <pre>
       <h3>Prelab</h3>
 
       <h4>Setup</h4>
@@ -206,7 +207,7 @@
       <p>
         After upload, the Artemis printed its BLE MAC address to the Serial Monitor (shown below), confirming that BLE was initialized and the board was discoverable.
       </p>
-      
+
       <img class="img-small" src="mac.png" alt="Serial Monitor showing Artemis BLE MAC address">
      
       
@@ -271,7 +272,7 @@
       <img class="img-small" src="connected.png" alt="connected to address">     
       <p>
         After connecting, the laptop sends commands by writing to <code>TX_CMD_STRING</code>. The Artemis checks for incoming writes, parses the command, executes the corresponding handler, and returns results by writing to <code>RX_STRING</code>, which the laptop can read directly or receive asynchronously using BLE notifications.
-      </p>
+      </p></pre>
       
       
     
@@ -303,19 +304,19 @@
 
       <h5>Relevant Code Snippet (Arduino)</h5>
       <pre><code class="language-cpp">case ECHO:
-  char char_arr[MAX_MSG_SIZE];
-  success = robot_cmd.get_next_value(char_arr);
-  if (!success) return;
+        char char_arr[MAX_MSG_SIZE];
+        success = robot_cmd.get_next_value(char_arr);
+        if (!success) return;
 
-  tx_estring_value.clear();
-  tx_estring_value.append("Robot says -> ");
-  tx_estring_value.append(char_arr);
-  tx_estring_value.append(" :)");
-  tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        tx_estring_value.clear();
+        tx_estring_value.append("Robot says -> ");
+        tx_estring_value.append(char_arr);
+        tx_estring_value.append(" :)");
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
 
-  Serial.print("Echo reply: ");
-  Serial.println(tx_estring_value.c_str());
-  break;</code></pre>
+        Serial.print("Echo reply: ");
+        Serial.println(tx_estring_value.c_str());
+        break;</code></pre>
 
       <p>
         After sending <code>HiHello</code> from Python, the laptop received the modified reply

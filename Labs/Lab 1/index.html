@@ -193,26 +193,30 @@
 
       <h4>Setup</h4>
       <p>
-        I first set up the laptop and the Artemis Nano so they could reliably communicate over BLE.
-        On the laptop, I created a Python environment for BLE and installed the required packages from the lab codebase.
-        On the Artemis side, I uploaded the provided <code>ble_arduino.ino</code> sketch, which initializes BLE, defines the GATT service/characteristics,
-        and starts advertising.
-      </p>
-      <p>
-        After uploading, the Artemis printed its BLE MAC address in the Serial Monitor. This confirmed that BLE initialized correctly and the board was advertising.
-      </p>
+  I first set up the laptop and the Artemis Nano so they could reliably communicate over BLE. On the laptop, I created a Python environment for BLE and installed the required packages from the lab codebase. Before attempting to connect, I generated a unique BLE service UUID in Python (using <code>uuid4()</code>) and updated the same service UUID in both <code>ble_arduino.ino</code> and <code>connection.yaml</code> so my board would not conflict with other devices in the lab. On the Artemis side, I then uploaded the provided <code>ble_arduino.ino</code> sketch, which initializes BLE, defines the GATT service/characteristics, and starts advertising.
+</p>
 
-      <p>
-      On the Python side, I initialized the BLE client and established a connection to the Artemis board using the provided codebase. This step creates a BLE controller object and connects to the Artemis using the MAC address and UUIDs specified in <code>connection.yaml</code>.
-      </p>
+<p>
+  After uploading <code>ble_arduino.ino</code>, the Artemis started advertising and printed its BLE MAC address in the Serial Monitor (e.g., <code>Advertising BLE with MAC: c0:81:b0:24:1:64</code>). This confirmed that BLE initialized correctly and the board was discoverable.
+</p>
 
-      <pre><code class="language-python">
-# Get Artemis BLE controller
+<p>
+  I copied this Artemis MAC address into <code>connection.yaml</code>, so the Python client can connect to the correct device.
+</p>
+
+<p>
+  Next, on the laptop side I initialized the Python BLE client and connected to the Artemis using the provided codebase:
+</p>
+
+<p>
+  Once the connection succeeded, the Arduino Serial Monitor printed the central device address (e.g., <code>Connected to: 74:a6:cd:cf:8:82</code>), confirming that my laptop had connected to the Artemis over BLE.
+</p>
+
+<pre><code class="language-python"># Get Artemis BLE controller
 ble = get_ble_controller()
 
 # Connect to the Artemis device
-ble.connect()
-</code></pre>
+ble.connect()</code></pre>
 
       <img class="img-small" src="macaddress.png" alt="Serial monitor showing Artemis BLE MAC address">
       <p class="muted">Serial Monitor output confirming BLE advertising and the Artemis MAC address.</p>

@@ -176,6 +176,9 @@
       </p>
     </div>
 
+
+
+
     <!-- ===================== -->
     <!-- ====== LAB 1B ======= -->
     <!-- ===================== -->
@@ -201,14 +204,11 @@
       </p>
       
       <p>
-        After uploading the sketch, the Artemis began advertising and printed its BLE MAC address to the Serial Monitor (for example,
-        <code>Advertising BLE with MAC: c0:81:b0:24:1:64</code>). This confirmed that BLE was initialized correctly and that the board was discoverable.
+        After uploading the sketch, the Artemis began advertising and printed its BLE MAC address to the Serial Monitor (picture below). This confirmed that BLE was initialized correctly and that the board was discoverable.
       </p>
       
-      <img class="img-small" src="macaddress.png" alt="Serial Monitor showing Artemis BLE MAC address">
-      <p class="muted">
-        Serial Monitor output confirming successful BLE initialization and advertising (MAC address printed).
-      </p>
+      <img class="img-small" src="mac.png" alt="Serial Monitor showing Artemis BLE MAC address">
+     
       
       <div style="margin-top: 28px;"></div>
       
@@ -241,18 +241,14 @@
       </p>
       
       <img class="img-small" src="inosketch.png" alt="Arduino sketch showing BLE service and characteristic UUID definitions">
-      <p class="muted">
-        Arduino sketch showing the BLE service and characteristic UUID definitions.
-      </p>
+      
       
       <p>
         I then updated <code>connection.yaml</code> with the Artemis MAC address, service UUID, and characteristic UUIDs so the Python client could identify and connect to the correct BLE device.
       </p>
       
       <img class="img-small" src="yamlsk.png" alt="connection.yaml showing Artemis address, BLE service UUID, and characteristic UUIDs">
-      <p class="muted">
-        <code>connection.yaml</code> containing the Artemis MAC address, service UUID, and characteristic UUIDs.
-      </p>
+      
       
       <div style="margin-top: 28px;"></div>
       
@@ -272,10 +268,9 @@
       ble.connect()</code></pre>
       
       <p>
-        Once the connection succeeded, the Arduino Serial Monitor printed the central device address (for example,
-        <code>Connected to: 74:a6:cd:cf:8:82</code>), confirming that the laptop successfully connected to the Artemis over BLE.
+        Once the connection succeeded, the Arduino Serial Monitor printed the central device address (picture below), confirming that the laptop successfully connected to the Artemis over BLE.
       </p>
-      
+      <img class="img-small" src="connected.png" alt="connected to address">     
       <p>
         After connecting, the laptop sends commands by writing to <code>TX_CMD_STRING</code>. The Artemis checks for incoming writes, parses the command, executes the corresponding handler, and returns results by writing to <code>RX_STRING</code>, which the laptop can read directly or receive asynchronously using BLE notifications.
       </p>
@@ -315,21 +310,15 @@
       <h5>Relevant Code Snippet (Arduino)</h5>
       <pre><code class="language-cpp">case ECHO:
   char char_arr[MAX_MSG_SIZE];
-
-  // Extract the next value from the command string as a character array
   success = robot_cmd.get_next_value(char_arr);
   if (!success) return;
 
-  // Build augmented reply
   tx_estring_value.clear();
   tx_estring_value.append("Robot says -> ");
   tx_estring_value.append(char_arr);
   tx_estring_value.append(" :)");
-
-  // Send it back over BLE (TX string characteristic)
   tx_characteristic_string.writeValue(tx_estring_value.c_str());
 
-  // Debug over USB serial
   Serial.print("Echo reply: ");
   Serial.println(tx_estring_value.c_str());
   break;</code></pre>
@@ -378,6 +367,10 @@
       <pre><code>// Arduino: case GET_TIME_MILLIS / GET_TIME_RATE </code></pre>
       <pre><code># Python: notify handler + rate calculation </code></pre>
     </div>
+
+
+
+
 
     <div class="card">
       <h3>Conclusion</h3>

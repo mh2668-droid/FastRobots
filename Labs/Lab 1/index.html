@@ -194,6 +194,7 @@
     <div class="card">
       
       <h3>Prelab</h3>
+      <div class="media">
 
       <h4>Setup</h4>
       <p>
@@ -212,6 +213,10 @@
      
       
       <div style="margin-top: 28px;"></div>
+      </div>
+
+
+      
       
       <h4>Configuration</h4>
       <p>
@@ -559,16 +564,14 @@
         <h4>Task 6: Time Storage</h4>
     
         <p>
-        The objective of this task was to store time stamp data locally on the Artemis using a global buffer, then transmit the buffered data to the laptop in a single batch. This approach avoids continuous streaming and allows verification that all recorded data points were successfully transferred over BLE.
+        The objective of this task was to store time stamp data locally on the Artemis using a global buffer, then transmit the buffered data to the laptop in a single batch. 
         </p>
 
         <p>
         On the Artemis side, I created a global array to store time stamps along with a counter to track how many values were recorded. When the <code>RECORD_TIME_DATA</code> command is received, the Artemis records <code>millis()</code> values for a fixed duration or until the buffer is full. These values are stored locally without being sent immediately.
         </p>
 
-        <p>
-        After recording is complete, the <code>SEND_TIME_DATA</code> command iterates through the buffer and sends each stored time stamp to the laptop as a string prefixed with <code>T:</code>. Once all values are transmitted, the Artemis sends a <code>DONE</code> message to signal completion.
-        </p>
+    
 
         <pre><code class="language-cpp">
         case RECORD_TIME_DATA:
@@ -585,6 +588,15 @@
             Serial.println(time_count);
             break;
         }
+        </code></pre>
+
+
+
+        <p>
+            After recording is complete, the <code>SEND_TIME_DATA</code> command iterates through the buffer and sends each stored time stamp to the laptop as a string prefixed with <code>T:</code>. Once all values are transmitted, the Artemis sends a <code>DONE</code> message to signal completion.
+        </p>
+
+        <pre><code class="language-cpp">
 
         case SEND_TIME_DATA:
         {

@@ -749,11 +749,7 @@
             overhead limits how fast data can be streamed and reduces the achievable sampling rate.
             </p>
             
-            <p>
-            For this reason, real-time streaming is best suited for low-rate data or situations where
-            seeing live data is more important than collecting high-resolution measurements.
-            </p>
-            
+    
             <h5>Buffered Data Collection and Transfer</h5>
             <p>
             In the buffered approach, data is first stored in arrays on the Artemis and only transmitted
@@ -809,9 +805,73 @@
             </p>
             
             <p>
-            Overall, real-time streaming is more useful for live monitoring and feedback, while buffered
+            Overall, I think real-time streaming is more useful for live monitoring and feedback, while buffered
             data transfer is better for collecting high-resolution data for later analysis.
             </p>
+
+
+        
+        <h4>Task 9: Effective Data Rate and BLE Overhead</h4>
+
+        
+        <p>
+            I measured round-trip time and effective payload throughput for two reply sizes: a small
+            5-byte message and a larger 120-byte message. Each command was sent repeatedly from Python,
+            and the response time was measured using BLE notifications.
+        </p>
+
+        <h4>Arduino Implementation</h4>
+        <pre><code class="language-cpp">case REPLY_5B:
+        tx_characteristic_string.writeValue("ABCDE");
+        break;
+
+        case REPLY_120B:
+        static char msg[121];
+        memset(msg, 'A', 120);
+        msg[120] = '\0';
+        tx_characteristic_string.writeValue(msg);
+        break;</code></pre>
+
+        <h4>Python Measurement (condensed)</h4>
+        <pre><code class="language-python"># handler timestamps replies
+        def on_rx(uuid, b):
+            rx_q.put_nowait((time.perf_counter_ns(),
+                            len(ble.bytearray_to_string(b))))
+
+        ble.start_notify(ble.uuid["RX_STRING"], on_rx)
+
+        async def bench(cmd, nbytes, N=200):
+            rtt, rate = [], []
+            for _ in range(N):
+                while not rx_q.empty(): rx_q.get_nowait()
+                t0 = time.perf_counter_ns()
+                ble.send_command(cmd, "")
+                t1, _ = await rx_q.get()
+                dt = (t1 - t0)/1e6
+                rtt.append(dt)
+                rate.append((nbytes/(dt/1000))/1024)
+            return np.mean(rtt), np.mean(rate)
+
+        rtt5, rate5   = await bench(CMD.REPLY_5B, 5)
+        rtt120, rate120 = await bench(CMD.REPLY_120B, 120)</code></pre>
+
+        <h4>Results</h4>
+        <ul>
+            <li><strong>5-byte reply:</strong> RTT ≈ 89.0 ms, rate ≈ 0.056 KiB/s</li>
+            <li><strong>120-byte reply:</strong> RTT ≈ 92.9 ms, rate ≈ 1.29 KiB/s</li>
+        </ul>
+
+        <img class="img-small" src="91.png" alt="BLE throughput vs payload size">
+        <img class="img-small" src="92.png" alt="f">
+
+        <h4>Discussion</h4>
+        <p>
+            From the result, we can see that RTT was nearly the same for both payload sizes, indicating that BLE communication is dominated
+            by fixed overhead rather than payload length. Small packets suffer heavily from this overhead,
+            resulting in very low effective throughput. Larger replies significantly reduce overhead per byte
+            and achieve much higher data rates.
+        </p>
+        </section>
 
 
 

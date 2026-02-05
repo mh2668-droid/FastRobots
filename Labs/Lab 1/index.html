@@ -629,12 +629,6 @@
         After issuing the <code>RECORD_TIME_DATA</code> command and allowing the buffer to fill, I sent the <code>SEND_TIME_DATA</code> command from Python. The laptop successfully received all buffered time values followed by the <code>DONE</code> message.
         </p>
 
-        <pre><code class="language-text">
-        Received: 1000
-        First 5: [623053, 623053, 623053, 623053, 623053]
-        Last 5: [623104, 623104, 623104, 623104, 623104]
-        </code></pre>
-
         <img class="img-small" src="61.png"
             alt="Python output confirming buffered data received">
 
@@ -643,7 +637,100 @@
             alt="Arduino Serial Monitor showing buffered recording and send">
 
 
-     
+
+        <h4>Task 7: Buffered Time + Temperature Pairs</h4>
+
+        <p>
+        The objective of this task was to record <strong>paired</strong> time stamps and temperature readings on the Artemis using two same-length global arrays. Each index in the arrays corresponds to one sample (i.e., <code>time_buf[i]</code> was recorded at the same moment as <code>temp_buf[i]</code>). After recording, the Artemis sends the paired data back to the laptop, and the Python notification handler parses each packet into two lists.
+        </p>
+
+        <p>
+        I added a second global buffer (<code>temp_buf</code>) with the same length as the time buffer. The command <code>RECORD_TEMP_DATA</code> records both <code>millis()</code> and <code>read_temp_c()</code> at approximately 50 Hz for 5 seconds (or until the buffer is full). The command <code>GET_TEMP_READINGS</code> then iterates through both arrays and sends each paired sample as a single formatted string:
+        <code>D:&lt;time_ms&gt;,&lt;temp_x100&gt;</code>. After all samples are sent, the Artemis transmits a <code>DONE</code> message.
+        </p>
+
+        <pre><code class="language-cpp">
+        case RECORD_TEMP_DATA: {
+            Serial.println("Entered RECORD_TEMP_DATA");
+
+            time_count = 0;
+            unsigned long start_ms = millis();
+
+            while (((millis() - start_ms) < 5000) && (time_count < TIME_BUF_LEN)) {
+                BLE.poll();
+                time_buf[time_count] = millis();
+                temp_buf[time_count] = read_temp_c();
+                time_count++;
+                delay(20);  // ~50 Hz
+            }
+
+            Serial.print("Recorded paired samples = ");
+            Serial.println(time_count);
+            break;
+        }
+
+        case GET_TEMP_READINGS: {
+            Serial.println("Entered GET_TEMP_READINGS");
+            Serial.print("Sending paired samples = ");
+            Serial.println(time_count);
+
+            char out[64];
+
+            for (int i = 0; i < time_count; i++) {
+                BLE.poll();
+                long temp_c_x100 = (long)(temp_buf[i] * 100.0f);
+                snprintf(out, sizeof(out), "D:%lu,%ld", time_buf[i], temp_c_x100);
+                tx_characteristic_string.writeValue(out);
+                delay(5);
+            }
+
+            tx_characteristic_string.writeValue("DONE");
+            delay(20);
+            tx_characteristic_string.writeValue("DONE");
+            delay(20);
+            tx_characteristic_string.writeValue("DONE");
+            break;
+        }
+        </code></pre>
+
+        <h4>Buffered Notification Handler (Python)</h4>
+        <p>
+        On the Python side, I registered a notification handler that listens for incoming strings. Each data packet begins with <code>D:</code> and contains a comma-separated time stamp and temperature value scaled by 100. The handler parses these messages and appends values into two lists (<code>t_list</code> and <code>temp_list</code>). Once a <code>DONE</code> message is received, the transfer is treated as complete.
+        </p>
+
+        <pre><code class="language-text">
+        on notification received:
+            convert BLE bytes to string
+            if message starts with "D:":
+                parse time_ms and temp_x100
+                t_list.append(time_ms)
+                temp_list.append(temp_x100 / 100)
+            if message == "DONE":
+                mark transfer complete
+        </code></pre>
+
+        <p>
+        After recording data for ~5 seconds and requesting the paired readings, the laptop received the same number of time stamps and temperature values, confirming that the data remained aligned by index.
+        </p>
+
+
+        <img class="img-small" src="71.png"
+            alt="Python output confirming buffered data received">
+
+        <img class="img-small" src="72.png"
+            alt="Python output confirming buffered data received">
+
+
+
+
+
+
+
+        
+
+
+
+            
 
 
 

@@ -94,7 +94,7 @@
       <span class="muted">Fast Robots | Spring 2026</span>
     </div>
 
-    <h1>Lab 1(not completed)</h1>
+    <h1>Lab 1: The Artemis board and Bluetooth</h1>
     <p class="subtitle">Artemis setup + BLE communication (Lab 1A and Lab 1B)</p>
 
     <!-- ===================== -->
@@ -196,15 +196,15 @@
 
       <h4>Setup</h4>
       <p>
-        The goal of the prelab was to prepare both the laptop and the RedBoard Artemis Nano for Bluetooth Low Energy (BLE) communication using the provided lab codebase. On the laptop, I created a Python environment and installed the BLE-related packages required to run the Jupyter notebook workflows.
+        The prelab prepared the laptop and RedBoard Artemis Nano for Bluetooth Low Energy (BLE) communication using the provided codebase. On the laptop, I set up a Python environment and installed the required BLE packages for the Jupyter notebooks.
       </p>
       
       <p>
-        On the Artemis side, I uploaded the provided <code>ble_arduino.ino</code> sketch using the Arduino IDE. This sketch initializes the ArduinoBLE library, defines the BLE service and characteristics, and prepares the board to advertise over BLE.
+        I then uploaded <code>ble_arduino.ino</code> to the Artemis, which initializes the ArduinoBLE library and configures the board to advertise a BLE service.
       </p>
       
       <p>
-        After uploading the sketch, the Artemis began advertising and printed its BLE MAC address to the Serial Monitor (picture below). This confirmed that BLE was initialized correctly and that the board was discoverable.
+        After upload, the Artemis printed its BLE MAC address to the Serial Monitor (shown below), confirming that BLE was initialized and the board was discoverable.
       </p>
       
       <img class="img-small" src="mac.png" alt="Serial Monitor showing Artemis BLE MAC address">
@@ -218,7 +218,7 @@
       </p>
       
       <p>
-        I generated a unique BLE <strong>service UUID</strong> in Python using <code>uuid4()</code>. This service UUID was then copied into both the Arduino sketch (<code>ble_arduino.ino</code>) and the Python configuration file (<code>connection.yaml</code>). Using a unique service UUID prevents conflicts with other students’ BLE devices in the lab.
+        I generated a unique BLE service UUID in Python using <code>uuid4()</code>. This service UUID was then copied into both the Arduino sketch and the Python configuration file. Using a unique service UUID prevents conflicts with other students’ BLE devices in the lab.
       </p>
       
       <img class="img-small" src="jp.png" alt="uuid4() used to generate a BLE service UUID">
@@ -235,7 +235,7 @@
       </ul>
       
       <p>
-        These characteristic UUIDs are defined in <code>ble_arduino.ino</code> so the Artemis advertises the expected BLE interface.
+        These characteristic UUIDs are defined in  Arduino sketch <code>ble_arduino.ino</code> so the Artemis advertises the expected BLE interface.
       </p>
       
       <img class="img-small" src="inosketch.png" alt="Arduino sketch showing BLE service and characteristic UUID definitions">

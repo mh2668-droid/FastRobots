@@ -112,7 +112,7 @@
         I first installed the ICM-20948 Arduino Library using the Arduino Library Manager. 
         The IMU was connected to the RedBoard Artemis Nano using the QWIIC connectors.
       </p>
-      <img src="connection.png" alt="imu connection">
+      <img class="img-small" src="connection.png" alt="connection imu">
       <p>
         To verify the hardware connection and library setup, I ran the example sketch
 from the SparkFun library. After uploading, the Serial Monitor can successfully print accelerometer, gyroscope, and magnetometer data.
@@ -120,15 +120,13 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
 
 
       <div class="video-wrap">
-        <iframe src="https://youtu.be/1i1zINzfdO0" allowfullscreen></iframe>
+        <iframe src="https://www.youtube.com/embed/1i1zINzfdO0" allowfullscreen></iframe>
       </div>
 
       <h4>AD0_VAL Discussion</h4>
         <p>
             In the example code, the variable AD0_VAL specifies the least significant bit of the IMU’s I²C address.
             This value depends on the hardware configuration of the board. On the SparkFun breakout, the AD0 pin is pulled high by default, so AD0_VAL should be set to 1.
-
-
 
             
         </p>
@@ -142,15 +140,7 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
 
 
 
-
-
-
-
     </div>
-
-
-
-
 
 
 
@@ -158,59 +148,78 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
     <div class="card">
       <h3>Tasks</h3>
 
-      <h4>Task 1: Blink</h4>
+      <h4>1. Accelerometer</h4>
       <p>
-        A basic blink sketch was uploaded to verify correct board configuration and GPIO operation.
+        The goal of this section was to use accelerometer measurements to estimate board orientation and to understand the effects of noise on these measurements. 
+        First, Pitch and roll were computed using the standard equations discussed in class, based on the gravity vector measured by the accelerometer.
+        These equations estimate orientation by comparing the acceleration components along each axis:
       </p>
+      <img class="img-small" src="eq.png" alt="pitch roll eq">
+      <p>   
+        In Arduino IDE, the accelerometer values were read in milligravity units and converted into pitch and roll angles as follows:
+      </p>
+      <pre><code class="language-python">
+        float roll_rad  = atan2(ay, az);
+        float pitch_rad = atan2(-ax, sqrt(ay*ay + az*az));
+        float roll_deg  = roll_rad  * 180.0 / M_PI;
+        float pitch_deg = pitch_rad * 180.0 / M_PI;</code></pre>
+
+      <p>
+        To validate the accelerometer-based orientation estimates, I rotated the IMU through known angles and recorded the output.
+        Figures below show the roll and pitch angles as the board was positioned near −90°, 0°, and +90°.
+      </p>
+      <img class="img-small" src="pandr.png" alt="pitch and roll">
+      <p>  
+        When the board was held flat, both pitch and roll remained near 0°. Rotating the board by approximately ±90° caused the corresponding angle to saturate near ±90°, 
+        as expected from the geometry of the gravity vector. Small fluctuations near the extrema were due to sensor noise and slight hand motion during the test.
+      </p>
+
+      <p>
+        A short video was also recorded showing the physical motion of the board alongside the serial output to confirm that the reported angles tracked the motion in real time.
+      </p>
+
       <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/vPq3t8IqA-8" allowfullscreen></iframe>
+        <iframe src="https://www.youtube.com/embed/nd0B1BVTZLU" allowfullscreen></iframe>
       </div>
-
-      <h4>Task 2: Serial Communication</h4>
       <p>
-        Serial communication was tested using the Arduino Serial Monitor and the board successfully
-        transmitted formatted messages at the specified baud rate. 
-      </p>
-      <img src="Serial.png" alt="Serial Monitor output showing successful communication">
 
-      <h4>Task 3: Temperature Sensor</h4>
+        From the collected accelerometer data and the pitch and roll plots, I evaluated the accuracy of the angle estimates at approximately −90°, 0°, and +90°. For each orientation, 
+        the measured angles closely matched the expected values, with the readings typically fluctuating within about 1–2 degrees. Across all tested orientations, the accelerometer provided reliable pitch and roll estimates under static conditions. A two-point calibration was not necessary for this part of the lab.
+      </p>
+
       <p>
-        The onboard temperature sensor was read using analog input. Measured values changed
-        in response to touch and ambient conditions as shown in the video.
+        Next, I analyzed the frequency content of the accelerometer signal to characterize noise and guide the design of a low-pass filter. The z-axis acceleration (az) was used as a representative signal.
+        Below is the Accelerometer time signal plot for az.
       </p>
-      <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/QgsjnWiClSM" allowfullscreen></iframe>
-      </div>
+      <img class="img-small" src="az.png" alt="az">
 
-      <h4>Task 4: Microphone</h4>
-      <p>
-        The microphone was used to detect sound intensity and dominant frequency components, 
-        Changes in the output were observed when I change the frequency. 
-      </p>
-      <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/bq4Tn3G5i3s" allowfullscreen></iframe>
-      </div>
+      
 
-      <h4>Task 5: Electric Tuning</h4>
-      <p>
-        I combined microphone readout with serial output to create a simplified electronic tuner.
-        The program detected and reported different dominant frequencies in real time.
-      </p>
-      <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/vsboKM0xSfU" allowfullscreen></iframe>
-      </div>
 
-    </div>
 
-    <div class="card">
-      <h3>Conclusion</h3>
-      <p>
-        In this lab, I set up the Arduino IDE and learned how to use the Artemis Nano board.
-        I tested basic functions such as blinking an LED, using the serial monitor, and reading
-        data from the temperature sensor and microphone. This lab helped me understand the board
-        and prepared me for later labs involving sensing and communication.
-      </p>
-    </div>
+
+
+
+
+
+
+    
+
+
+
+
+
+     
+
+
+
+
+
+
+
+
+
+
 
 
 

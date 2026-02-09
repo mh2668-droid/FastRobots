@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lab 1 | Fast Robots</title>
+  <title>Lab 2 | Fast Robots</title>
   <link rel="stylesheet" href="../../style.css" />
   <!-- MathJax for LaTeX equations -->
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -138,7 +138,7 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
       <h4>AD0_VAL Discussion</h4>
         <p>
             In the example code, the variable AD0_VAL specifies the least significant bit of the IMU’s I²C address.
-            This value depends on the hardware configuration of the board. On the SparkFun breakout, the AD0 pin is pulled high by default, so AD0_VAL should be set to 1.
+            On the SparkFun breakout, the AD0 pin is pulled high by default, so AD0_VAL should be set to 1.
 
             
         </p>
@@ -165,9 +165,9 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
 
       <h4>1. Accelerometer</h4>
       <p>
-        The goal of this section was to use accelerometer measurements to estimate board orientation and to understand the effects of noise on these measurements. 
+        In this section, I used accelerometer measurements to estimate board orientation and to understand the effects of noise on these measurements. 
         First, Pitch and roll were computed using the standard equations discussed in class, based on the gravity vector measured by the accelerometer.
-        These equations estimate orientation by comparing the acceleration components along each axis:
+        
       </p>
 
       <p>
@@ -197,7 +197,7 @@ float pitch_deg = pitch_rad * 180.0 / M_PI;
       </p>
       <img class="img-medium" src="pandr.png" alt="pitch and roll">
       <p>  
-        When the board was held flat, both pitch and roll remained near 0°. Rotating the board by approximately ±90° caused the corresponding angle to saturate near ±90°, 
+        When the board was held flat, both pitch and roll remained near 0°. I rotated the board by approximately ±90° caused the corresponding angle to saturate near ±90°, 
         as expected from the geometry of the gravity vector. Small fluctuations near the extrema were due to sensor noise and slight hand motion during the test.
       </p>
 
@@ -211,7 +211,7 @@ float pitch_deg = pitch_rad * 180.0 / M_PI;
       </div>
       <p>
 
-        From the collected accelerometer data and the pitch and roll plots, I evaluated the accuracy of the angle estimates at approximately −90°, 0°, and +90°. For each orientation, 
+        From the collected accelerometer data and the pitch and roll plots, I evaluated the accuracy of the angle estimates at approximately ±90°. For each orientation, 
         the measured angles closely matched the expected values, with the readings typically fluctuating within about 1–2 degrees. Across all tested orientations, the accelerometer provided reliable pitch and roll estimates under static conditions. A two-point calibration was not necessary for this part of the lab.
       </p>
 
@@ -227,7 +227,7 @@ float pitch_deg = pitch_rad * 180.0 / M_PI;
       </p>
 
       <p>   
-        To understand the frequency content of the noise, I computed the Fast Fourier Transform (FFT) of the entire az signal using Python. The FFT converts the time-domain signal into the frequency domain, allowing individual frequency components to be examined.
+        To understand the frequency content of the noise, I computed the Fast Fourier Transform (FFT) of the entire az signal using Python. 
 
       </p>
 
@@ -248,13 +248,14 @@ float pitch_deg = pitch_rad * 180.0 / M_PI;
       <img class="img-small" src="fft.png" alt="eq2">
 
       <p>
-        The figure above shows the FFT amplitude spectrum of az. Most of the signal energy is concentrated below approximately 1–2 Hz, showing that slow orientation changes and the gravity component. Above this range, the spectrum flattens and contains lower-amplitude components associated with noise and vibration.
+        The figure above shows the FFT amplitude spectrum of az. Most of the signal energy is concentrated below approximately 1–2 Hz, showing that slow orientation changes.
+        Above this range, the spectrum flattens and contains lower-amplitude components associated with noise and vibration.
         So, a cutoff frequency of approximately 2 Hz was chosen. 
       </p>
 
       <p>
 
-        Using the cutoff frequency from the FFT, I applied a first-order RC low-pass filter to the accelerometer-based pitch and roll computed from the accelerometer equations. The RC relationship from lecture is:
+        Using the cutoff frequency from the FFT, I applied a first-order RC low-pass filter to the filtered az computed from the accelerometer equations. The RC relationship from lecture is:
       </p>
 
       <p>
@@ -286,10 +287,7 @@ az_filt = alpha * az + (1 - alpha) * az_filt;
       <img class="img-small" src="og vs lpf.png" alt="eq2">
 
       <p>
-        The figure above compares the original az signal to the low-pass filtered output. The filtered signal is significantly smoother and effectively suppresses high-frequency jitter and sharp spikes present in the raw data, while preserving the overall trend of the motion.
-        The low pass filter removes high frequency noise but causes a small delay when the motion changes quickly. 
-        The FFT shows that most of the noise is at higher frequencies, which helps explain why this cutoff frequency works well. 
-        Overall, The filtered signal is smoother and more stable, making it better for later use such as sensor fusion. 
+        The low-pass filter smooths the signal and removes high-frequency jitter and spikes, but it adds a small lag during rapid changes. Overall the filtered output is more stable and better suited for sensor fusion.
       </p>
     </div>
 
@@ -298,10 +296,10 @@ az_filt = alpha * az + (1 - alpha) * az_filt;
         <h4>2. Gyroscope</h4>
 
         <p>
-        The goal of this section is to compute orientation angles using the gyroscope, compare them with accelerometer-based estimates, and show how a complementary filter improves accuracy and stability.
+        In this section, I computed orientation angles using the gyroscope, compare them with accelerometer-based estimates, and show how a complementary filter improves accuracy and stability.
         </p>
         <p>
-            To estimate orientation from the gyroscope, I integrated the gyro angular rates over time using the discrete-time update from lecture:
+        I first integrated the gyro angular rates over time using the discrete-time update from lecture to estimate orientation from the gyroscope::
         </p>
         <p>
         $$
@@ -361,11 +359,13 @@ roll_cf  = alpha * roll_g  + (1 - alpha) * roll_acc;
         <img class="img-small" src="pitchco.png" alt="eq2">
         <img class="img-small" src="rollco.png" alt="eq2">
         <p>
-            The figure above compare the orientation estimates from the accelerometer, filtered accelerometer, gyroscope, and complementary filter.we can see the complementary filter follows rapid motion closely, similar to the gyroscope, but remains stable over time without accumulating drift. In contrast, the gyro-only estimate gradually drifts, while the raw accelerometer signal is noisy and sensitive to vibration.
+            The figure above compare the orientation estimates from the accelerometer, filtered accelerometer, gyroscope, and complementary filter.
         </p>
         <p>
-            By blending the short-term accuracy of the gyroscope with the long-term stability of the accelerometer, the complementary filter significantly reduces noise and vibration effects while maintaining accurate tracking across the full motion range.
+            we can see the complementary filter tracks fast motion like the gyroscope but stays stable over time without drift. Compared to raw accelerometer estimates,
+            it also reduces vibration noise while keeping accurate angles across the full range.
         </p>
+
 
     
     </div>
@@ -373,32 +373,46 @@ roll_cf  = alpha * roll_g  + (1 - alpha) * roll_acc;
     <div class="card">
         <h4>3. Sample Data</h4>
         <p>
-            I followed the Lab 1 framework and moved all high-rate data collection onto the Artemis to avoid delays from continuous BLE transmission. I restructured the main loop to run as fast as possible by removing all delay() calls and commenting out most Serial.print() statements.
+            In this session, I followed the Lab 1 framework and moved all high-rate data collection onto the Artemis to avoid delays from continuous BLE transmission.
+            First, I restructured the main loop to run as fast as possible by removing all delay() calls and commenting out most Serial.print() statements.
 
         </p>
         <p>
-            Rather than waiting for IMU data in a blocking way, I checked myICM.dataReady() on every loop iteration and immediately stored the data when it became available. Each IMU sample was saved along with a microsecond-resolution timestamp:                   
+            Rather than waiting for IMU data in a blocking way, I checked myICM.dataReady() on every loop iteration and immediately stored the data when it became available.
+             Each IMU sample was saved along with a microsecond-resolution timestamp:                   
         </p>
         <pre><code class="language-cpp">if (imu_recording && myICM.dataReady()) {
-myICM.getAGMT();
-imu_buf[imu_count].t_us = micros();
-imu_buf[imu_count].ax = myICM.agmt.acc.axes.x;
-imu_buf[imu_count].ay = myICM.agmt.acc.axes.y;
-imu_buf[imu_count].az = myICM.agmt.acc.axes.z;
-imu_buf[imu_count].gx = myICM.agmt.gyr.axes.x;
-imu_buf[imu_count].gy = myICM.agmt.gyr.axes.y;
-imu_buf[imu_count].gz = myICM.agmt.gyr.axes.z;
-imu_count++;
-}  </code></pre>
+    myICM.getAGMT();
+    imu_buf[imu_count].t_us = micros();
+    imu_buf[imu_count].ax = myICM.agmt.acc.axes.x;
+    imu_buf[imu_count].ay = myICM.agmt.acc.axes.y;
+    imu_buf[imu_count].az = myICM.agmt.acc.axes.z;
+    imu_buf[imu_count].gx = myICM.agmt.gyr.axes.x;
+    imu_buf[imu_count].gy = myICM.agmt.gyr.axes.y;
+    imu_buf[imu_count].gz = myICM.agmt.gyr.axes.z;
+    imu_count++;
+    }  </code></pre>
+
+        <p>
+            I used a flag-based approach to control recording. Recording started when a BLE command was received and automatically stopped after 5 seconds or when the buffer filled:
+        </p>
+        <pre><code class="language-cpp">if (micros() - imu_start_us > 5000000UL) {
+    imu_recording = false;
+}   
+        </code></pre>
+
+
+
+
         <p>
             This ensured the main loop continued running freely and was not limited by IMU or BLE timing. Then I stored IMU data using a single struct-based array:
         </p>
 
         <pre><code class="language-cpp">struct ImuSample {
-uint32_t t_us;
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
-};</code></pre>
+    uint32_t t_us;
+    int16_t ax, ay, az;
+    int16_t gx, gy, gz;
+    };</code></pre>
 
         <p>
             I chose a single array rather than separate accelerometer and gyroscope arrays to keep all measurements time-aligned and simplify data handling. I stored raw int16_t sensor values instead of floats to reduce memory usage and minimize BLE transmission overhead.
@@ -410,10 +424,10 @@ int16_t gx, gy, gz;
 
         </p>
         <pre><code class="language-python">def imu_handler(uuid, byte_array):
-msg = ble.bytearray_to_string(byte_array).strip()
-if msg.startswith("I:"):
-vals = msg[2:].split(",")
-imu_dump.append(tuple(int(v) for v in vals))</code></pre>
+    msg = ble.bytearray_to_string(byte_array).strip()
+    if msg.startswith("I:"):
+        vals = msg[2:].split(",")
+        imu_dump.append(tuple(int(v) for v in vals))</code></pre>
         <p>
             Using this approach, I successfully recorded and transmitted a full 5 seconds of IMU data over Bluetooth:
         </p>
@@ -425,18 +439,12 @@ imu_dump.append(tuple(int(v) for v in vals))</code></pre>
         <p>
             This figure demonstrates continuous sampling, correct timestamps, and successful data buffering.
 
-
         </p> 
 
-
-        
-
-
-
-
-
-
     </div>
+
+
+
 
 
 
@@ -457,7 +465,9 @@ imu_dump.append(tuple(int(v) for v in vals))</code></pre>
     <div class="card">
       <h3>Conclusion</h3>
       <p>
-        <p>
+
+        In this lab, I worked with the IMU on the Artemis to measure acceleration and angular velocity and use them to estimate orientation. Through filtering and sensor fusion, I learned how to handle noise, drift, and real-world motion effects in IMU data. I also practiced efficient data sampling and Bluetooth transmission by buffering IMU data on the board before sending it for analysis. Overall, this lab helped build a strong foundation for working with sensors, and I’m excited to apply these ideas in future robotics labs.
+      </p>
         
         
                 
@@ -465,7 +475,6 @@ imu_dump.append(tuple(int(v) for v in vals))</code></pre>
 
     <div class="footer">
       <a class="back-button" href="../../index.html">← Back to Main Page</a>
-      <span>Last updated: <!-- optional date --></span>
     </div>
   </div>
 </body>

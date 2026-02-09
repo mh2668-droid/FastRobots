@@ -370,6 +370,74 @@ roll_cf  = alpha * roll_g  + (1 - alpha) * roll_acc;
     
     </div>
 
+    <div class="card">
+        <h4>3. Sample Data</h4>
+        <p>
+            I followed the Lab 1 framework and moved all high-rate data collection onto the Artemis to avoid delays from continuous BLE transmission. I restructured the main loop to run as fast as possible by removing all delay() calls and commenting out most Serial.print() statements.
+
+        </p>
+        <p>
+            Rather than waiting for IMU data in a blocking way, I checked myICM.dataReady() on every loop iteration and immediately stored the data when it became available. Each IMU sample was saved along with a microsecond-resolution timestamp:                   
+        </p>
+        <pre><code class="language-cpp">if (imu_recording && myICM.dataReady()) {
+myICM.getAGMT();
+imu_buf[imu_count].t_us = micros();
+imu_buf[imu_count].ax = myICM.agmt.acc.axes.x;
+imu_buf[imu_count].ay = myICM.agmt.acc.axes.y;
+imu_buf[imu_count].az = myICM.agmt.acc.axes.z;
+imu_buf[imu_count].gx = myICM.agmt.gyr.axes.x;
+imu_buf[imu_count].gy = myICM.agmt.gyr.axes.y;
+imu_buf[imu_count].gz = myICM.agmt.gyr.axes.z;
+imu_count++;
+}  </code></pre>
+        <p>
+            This ensured the main loop continued running freely and was not limited by IMU or BLE timing. Then I stored IMU data using a single struct-based array:
+        </p>
+
+        <pre><code class="language-cpp">struct ImuSample {
+uint32_t t_us;
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+};</code></pre>
+
+        <p>
+            I chose a single array rather than separate accelerometer and gyroscope arrays to keep all measurements time-aligned and simplify data handling. I stored raw int16_t sensor values instead of floats to reduce memory usage and minimize BLE transmission overhead.
+        </p>
+
+        <p>
+            On the Python side, I reused the BLE command and notification framework from Lab 1. I started recording by sending a RECORD_IMU_DATA command and then requested the buffered data using SEND_IMU_DATA.
+            Then I used a notification handler to parse each incoming IMU packet and append it to a Python list for offline processing:
+
+        </p>
+        <pre><code class="language-python">def imu_handler(uuid, byte_array):
+msg = ble.bytearray_to_string(byte_array).strip()
+if msg.startswith("I:"):
+vals = msg[2:].split(",")
+imu_dump.append(tuple(int(v) for v in vals))</code></pre>
+        <p>
+            Using this approach, I successfully recorded and transmitted a full 5 seconds of IMU data over Bluetooth:
+        </p>
+        <img class="img-small" src="5spy.png" alt="eq2">   
+        <p>
+            This corresponds to an effective sampling rate of approximately 337 Hz, showing that the main loop runs faster than the IMU produces new data. The recorded accelerometer values remained stable when the board was stationary, confirming correct timing and buffering.
+        </p>  
+        <img class="img-small" src="5s.png" alt="eq2">   
+        <p>
+            This figure demonstrates continuous sampling, correct timestamps, and successful data buffering.
+
+
+        </p> 
+
+
+        
+
+
+
+
+
+
+    </div>
+
 
 
 

@@ -327,48 +327,49 @@ az_filt = alpha * az + (1 - alpha) * az_filt;
 
         </p>
 
+        <p>
+            The complementary filter blends the high frequency response of the gyroscope with the low frequency stability of the accelerometer. 
+            Then I implemented a complementary filter to estimate pitch and roll using the equations from lecture, the filter is defined as:
+        </p>
+
+        <p>
+            $$
+            \theta_{cf}[k] = \alpha \big( \theta_{cf}[k-1] + \omega[k]\Delta t \big) + (1-\alpha)\theta_a[k]
+            $$
+        </p>
 
 
+        <p>
+        The complementary filter was implemented in the main loop for both pitch and roll:
 
 
+        </p>
 
+        <pre><code class="language-cpp">// Complementary filter parameters
+float fc = 2.0;                 // cutoff frequency (Hz)
+float tau = 1.0 / (2.0 * M_PI * fc);
+float alpha = tau / (tau + dt); 
+// Gyro integration
+pitch_g = pitch_g + gyro_y * dt;
+roll_g  = roll_g  + gyro_x * dt;
+// Complementary filter
+pitch_cf = alpha * pitch_g + (1 - alpha) * pitch_acc;
+roll_cf  = alpha * roll_g  + (1 - alpha) * roll_acc;
+</code></pre>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        <img class="img-small" src="pitchco.png" alt="eq2">
+        <img class="img-small" src="rollco.png" alt="eq2">
+        <p>
+            The figure above compare the orientation estimates from the accelerometer, filtered accelerometer, gyroscope, and complementary filter.we can see the complementary filter follows rapid motion closely, similar to the gyroscope, but remains stable over time without accumulating drift. In contrast, the gyro-only estimate gradually drifts, while the raw accelerometer signal is noisy and sensitive to vibration.
+        </p>
+        <p>
+            By blending the short-term accuracy of the gyroscope with the long-term stability of the accelerometer, the complementary filter significantly reduces noise and vibration effects while maintaining accurate tracking across the full motion range.
+        </p>
 
     
+    </div>
 
 
-
-
-
-     
-
-
-
-
-
-
-
-
-
-
-        </div>
 
 
 
@@ -390,21 +391,7 @@ az_filt = alpha * az + (1 - alpha) * az_filt;
         <p>
         
         
-                In this lab, I learned how Bluetooth Low Energy communication works between the Artemis
-                board and my laptop, including command-based messaging, notifications, and buffered
-                data transfer. I also saw how BLE overhead limits real-time streaming rates and why
-                storing data locally before transmission enables higher sampling rates and more
-                reliable data collection.
-                </p>
                 
-                <p>
-                The main challenges involved debugging notification handlers and preventing data loss
-                when sending data at higher rates. These issues were resolved by buffering data on the
-                Artemis and using asynchronous handling in Python. Over the course of the lab, I also
-                sharpened my index-based HTML formatting skills while organizing results and
-                creatin the write-up.
-                </p>
-      
     </div>
 
     <div class="footer">

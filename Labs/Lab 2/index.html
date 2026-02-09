@@ -85,6 +85,16 @@
       border-radius: 10px;
       border: 1px solid var(--border);
     }
+
+    .img-medium {
+      max-width: 800px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
 
@@ -161,13 +171,13 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
 
       <p>
         $$
-        \( \theta_a = \operatorname{atan2}(a_x, a_z) \)
+         \theta_a = \operatorname{atan2}(a_x, a_z) 
         $$
       </p>
       
       <p>
         $$
-        \( \phi_a = \operatorname{atan2}(a_y, a_z) \)
+         \phi_a = \operatorname{atan2}(a_y, a_z) 
         $$
       </p>
 
@@ -184,12 +194,13 @@ float pitch_deg = pitch_rad * 180.0 / M_PI;
         To validate the accelerometer-based orientation estimates, I rotated the IMU through known angles and recorded the output.
         Figures below show the roll and pitch angles as the board was positioned near −90°, 0°, and +90°.
       </p>
-      <img class="img-small" src="pandr.png" alt="pitch and roll">
+      <img class="img-medium" src="pandr.png" alt="pitch and roll">
       <p>  
         When the board was held flat, both pitch and roll remained near 0°. Rotating the board by approximately ±90° caused the corresponding angle to saturate near ±90°, 
         as expected from the geometry of the gravity vector. Small fluctuations near the extrema were due to sensor noise and slight hand motion during the test.
       </p>
 
+    
       <p>
         A short video was also recorded showing the physical motion of the board alongside the serial output to confirm that the reported angles tracked the motion in real time.
       </p>
@@ -266,36 +277,51 @@ float pitch_deg = pitch_rad * 180.0 / M_PI;
         This is implemented directly in my Arduino code as:
       </p>
 
-      <pre><code class="language-cpp">float roll_rad  = atan2(ay, az);
-float pitch_rad = atan2(-ax, sqrt(ay*ay + az*az));
-float roll_deg  = roll_rad  * 180.0 / M_PI;
-float pitch_deg = pitch_rad * 180.0 / M_PI;
+      <pre><code class="language-cpp">float tau = 1.0 / (2 * M_PI * fc);
+float alpha = dt / (tau + dt);
+az_filt = alpha * az + (1 - alpha) * az_filt;
 </code></pre>
 
+      <img class="img-small" src="og vs lpf.png" alt="eq2">
 
-
-
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      <p>
+        The figure above compares the original az signal to the low-pass filtered output. The filtered signal is significantly smoother and effectively suppresses high-frequency jitter and sharp spikes present in the raw data, while preserving the overall trend of the motion.
+        The low pass filter removes high frequency noise but causes a small delay when the motion changes quickly. 
+        The FFT shows that most of the noise is at higher frequencies, which helps explain why this cutoff frequency works well. 
+        Overall, The filtered signal is smoother and more stable, making it better for later use such as sensor fusion. 
+      </p>
     </div>
+
+    <div>
+
+        <h4>2. Gyroscope</h4>
+
+        <p>
+        The goal of this section is to compute orientation angles using the gyroscope, compare them with accelerometer-based estimates, and show how a complementary filter improves accuracy and stability.
+        </p>
+        <p>
+        The gyroscope outputs angular velocity \omega_x,\omega_y,\omega_z in deg/s. To estimate angles, I integrated the gyro rates over time using the discrete-time update from lecture:
+        </p>
+        <p>
+        $$
+        \theta[k] = \theta[k-1] + \omega[k]\Delta t
+        $$
+        </p>
+        <p>
+            where \Delta t is computed from the timestamp difference between samples (using micros()), and \theta represents roll, pitch, or yaw. In my implementation, roll and pitch were obtained by integrating the corresponding gyro axes, and yaw was computed by integrating the z-axis rate.
+        </p>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

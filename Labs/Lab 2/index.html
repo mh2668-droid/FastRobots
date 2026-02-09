@@ -160,28 +160,25 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
       </p>
 
       <p>
+        $$
         \( \theta_a = \operatorname{atan2}(a_x, a_z) \)
+        $$
       </p>
       
       <p>
+        $$
         \( \phi_a = \operatorname{atan2}(a_y, a_z) \)
+        $$
       </p>
-
-
-
-
-
-
-
 
       <p>   
         In Arduino IDE, the accelerometer values were read in milligravity units and converted into pitch and roll angles as follows:
       </p>
-      <pre><code class="language-python">
-        float roll_rad  = atan2(ay, az);
-        float pitch_rad = atan2(-ax, sqrt(ay*ay + az*az));
-        float roll_deg  = roll_rad  * 180.0 / M_PI;
-        float pitch_deg = pitch_rad * 180.0 / M_PI;</code></pre>
+      <pre><code class="language-cpp">float roll_rad  = atan2(ay, az);
+float pitch_rad = atan2(-ax, sqrt(ay*ay + az*az));
+float roll_deg  = roll_rad  * 180.0 / M_PI;
+float pitch_deg = pitch_rad * 180.0 / M_PI;
+</code></pre>
 
       <p>
         To validate the accelerometer-based orientation estimates, I rotated the IMU through known angles and recorded the output.
@@ -265,6 +262,19 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
         y[k] = \alpha x[k] + (1-\alpha)\,y[k-1]
         $$
       </p>
+      <p>
+        This is implemented directly in my Arduino code as:
+      </p>
+
+      <pre><code class="language-cpp">float roll_rad  = atan2(ay, az);
+float pitch_rad = atan2(-ax, sqrt(ay*ay + az*az));
+float roll_deg  = roll_rad  * 180.0 / M_PI;
+float pitch_deg = pitch_rad * 180.0 / M_PI;
+</code></pre>
+
+
+
+
 
       
 

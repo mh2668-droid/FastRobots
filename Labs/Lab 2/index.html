@@ -226,9 +226,11 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
         The discrete Fourier transform is defined as:
       </p>
 
+      <p>
       $$
       X(f_k) = \sum_{n=0}^{N-1} x[n] e^{-j 2 \pi k n / N}
       $$
+      </p>
 
       <p>
         where x[n] is the sampled signal and N is the total number of samples.
@@ -244,6 +246,24 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
       <p>
 
         Using the cutoff frequency from the FFT, I applied a first-order RC low-pass filter to the accelerometer-based pitch and roll computed from the accelerometer equations. The RC relationship from lecture is:
+      </p>
+
+      <p>
+        $$
+        RC = \frac{1}{2\pi f_c}
+        $$
+      </p>
+      
+      <p>
+        and the discrete-time low-pass filter update is:
+      </p>
+      
+      <p>
+        $$
+        \alpha = \frac{\Delta t}{RC + \Delta t},
+        \qquad
+        y[k] = \alpha x[k] + (1-\alpha)\,y[k-1]
+        $$
       </p>
 
       

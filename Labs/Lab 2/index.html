@@ -158,7 +158,7 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
         First, Pitch and roll were computed using the standard equations discussed in class, based on the gravity vector measured by the accelerometer.
         These equations estimate orientation by comparing the acceleration components along each axis:
       </p>
-      <img class="img-small" src="eq.png" alt="pitch roll eq">
+
       <p>
         \( \theta_a = \operatorname{atan2}(a_x, a_z) \)
       </p>
@@ -167,11 +167,6 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
         \( \phi_a = \operatorname{atan2}(a_y, a_z) \)
       </p>
 
-
-      <p>
-        \( \theta_a = \operatorname{atan2}(a_x, a_z) \)
-        \( \phi_a = \operatorname{atan2}(a_y, a_z) \)
-      </p>
 
 
 
@@ -231,7 +226,9 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
         The discrete Fourier transform is defined as:
       </p>
 
-      <img class="img-small" src="eq2.png" alt="eq2">
+      $$
+      X(f_k) = \sum_{n=0}^{N-1} x[n] e^{-j 2 \pi k n / N}
+      $$
 
       <p>
         where x[n] is the sampled signal and N is the total number of samples.

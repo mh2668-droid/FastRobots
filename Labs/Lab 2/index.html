@@ -148,6 +148,8 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
     <div class="card">
       <h3>Tasks</h3>
 
+      <div>
+
       <h4>1. Accelerometer</h4>
       <p>
         The goal of this section was to use accelerometer measurements to estimate board orientation and to understand the effects of noise on these measurements. 
@@ -155,6 +157,26 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
         These equations estimate orientation by comparing the acceleration components along each axis:
       </p>
       <img class="img-small" src="eq.png" alt="pitch roll eq">
+      <p>
+        \( \theta_a = \operatorname{atan2}(a_x, a_z) \)
+      </p>
+      
+      <p>
+        \( \phi_a = \operatorname{atan2}(a_y, a_z) \)
+      </p>
+
+
+      <p>
+        \( \theta_a = \operatorname{atan2}(a_x, a_z) \)
+        \( \phi_a = \operatorname{atan2}(a_y, a_z) \)
+      </p>
+
+
+
+
+
+
+
       <p>   
         In Arduino IDE, the accelerometer values were read in milligravity units and converted into pitch and roll angles as follows:
       </p>
@@ -188,12 +210,65 @@ from the SparkFun library. After uploading, the Serial Monitor can successfully 
       </p>
 
       <p>
-        Next, I analyzed the frequency content of the accelerometer signal to characterize noise and guide the design of a low-pass filter. The z-axis acceleration (az) was used as a representative signal.
-        Below is the Accelerometer time signal plot for az.
+        
+        To analyze noise in the accelerometer data, I examined the z-axis acceleration (az) recorded while manually rotating and holding the IMU. 
       </p>
       <img class="img-small" src="az.png" alt="az">
 
+      <p>
+        The figure above shows the time-domain az signal. While the gravity component dominates when the IMU is held steady, the signal contains sharp transients and noticeable high-frequency jitter during orientation changes. These effects are especially visible around the transition regions, where spikes and oscillations appear before the signal settles.
+        Small fluctuations remain even after the IMU becomes stationary. This behavior motivates further analysis in the frequency domain.
+      </p>
+
+      <p>   
+        To understand the frequency content of the noise, I computed the Fast Fourier Transform (FFT) of the entire az signal using Python. The FFT converts the time-domain signal into the frequency domain, allowing individual frequency components to be examined.
+
+      </p>
+
+      <p>   
+        The discrete Fourier transform is defined as:
+      </p>
+
+      <img class="img-small" src="eq2.png" alt="eq2">
+
+      <p>
+        where x[n] is the sampled signal and N is the total number of samples.
+      </p>
+
+      <img class="img-small" src="fft.png" alt="eq2">
+
+      <p>
+        The figure above shows the FFT amplitude spectrum of az. Most of the signal energy is concentrated below approximately 1–2 Hz, showing that slow orientation changes and the gravity component. Above this range, the spectrum flattens and contains lower-amplitude components associated with noise and vibration.
+        So, a cutoff frequency of approximately 2 Hz was chosen. 
+      </p>
+
+      <p>
+
+        Using the cutoff frequency from the FFT, I applied a first-order RC low-pass filter to the accelerometer-based pitch and roll computed from the accelerometer equations. The RC relationship from lecture is:
+      </p>
+
       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+
+
 
 
 

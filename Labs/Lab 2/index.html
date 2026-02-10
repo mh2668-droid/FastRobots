@@ -443,21 +443,21 @@ roll_cf  = alpha * roll_g  + (1 - alpha) * roll_acc;
 
     </div>
 
+    <div class="card">
+
+        <h4>4. RC car stunt</h4>
 
 
+        <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/8ndCtBMi-mU" allowfullscreen></iframe>
+          </div>
+
+        <p>
+            For the stunt, I drove the RC car and performed couple flips.  The car felt fast and had a lot of torque, which made it responsive but also easy to tip over. 
+        </p>
 
 
-
-
-
-
-
-
-
-
-
-      
-
+        </div>
 
 
 
@@ -465,8 +465,8 @@ roll_cf  = alpha * roll_g  + (1 - alpha) * roll_acc;
     <div class="card">
       <h3>Conclusion</h3>
       <p>
+        In this lab, I used the Artemis IMU to estimate orientation and see how real sensor data behaves. I used FFT and filtering to deal with noise, and a complementary filter to reduce drift while keeping fast response. I also logged 5 seconds of IMU data onboard and sent it over BLE for analysis. Overall, this lab made IMU sensing feel a lot more practical, and I’m ready to use it in later labs.
 
-        In this lab, I worked with the IMU on the Artemis to measure acceleration and angular velocity and use them to estimate orientation. Through filtering and sensor fusion, I learned how to handle noise, drift, and real-world motion effects in IMU data. I also practiced efficient data sampling and Bluetooth transmission by buffering IMU data on the board before sending it for analysis. Overall, this lab helped build a strong foundation for working with sensors, and I’m excited to apply these ideas in future robotics labs.
       </p>
         
         

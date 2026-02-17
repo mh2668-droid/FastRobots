@@ -264,7 +264,63 @@
 
         <h4>3. Parallel TOF setup </h4>
 
-        
+        <p>
+            To run two VL53L1X sensors on the same I2C bus, I had to resolve the address conflict since both sensors power up with the default address 0x29. I wired the XSHUT pin of one sensor to Artemis pin 2 so I could power it down during startup, change the address of the other sensor, and then bring the second sensor back online. This allowed sensor 1 to be reassigned to 0x20 while sensor 2 remained at 0x29, so both sensors could operate simultaneously.
+        </p>
+
+        <p>
+            <img class="img-medium" src="w.png" alt="   ">
+        </p>
+        <p>
+            The core address reassignment logic in setup() is shown below. 
+        </p>
+        <pre><code class="language-cpp">// setup(): assign unique I2C addresses using XSHUT
+            #define SHUTDOWN_PIN 2
+            #define SENSOR1_ADDRESS_NEW 0x20
+            pinMode(SHUTDOWN_PIN, OUTPUT);
+            digitalWrite(SHUTDOWN_PIN, LOW);     // hold Sensor 2 off
+            delay(50);            
+            distanceSensor1.begin();             // only Sensor 1 is on bus at 0x29
+            distanceSensor1.setI2CAddress(SENSOR1_ADDRESS_NEW);   // move to 0x20
+            delay(10);
+            digitalWrite(SHUTDOWN_PIN, HIGH);    // enable Sensor 2 (still at 0x29)
+            delay(50);
+            distanceSensor2.begin();
+            </code></pre>
+
+        <p>
+            After both sensors were initialized,
+             I confirmed parallel operation by reading and printing both sensors in the same loop iteration. 
+             The key ranging logic is shown below.
+        </p>
+
+        <pre><code class="language-cpp">// loop(): read both sensors and print in one line
+            int d1 = readDistance(distanceSensor1);
+            int d2 = readDistance(distanceSensor2);
+            Serial.print("Sensor1 (0x20): ");
+            Serial.print(d1);
+            Serial.print(" mm\tSensor2 (0x29): ");
+            Serial.print(d2);
+            Serial.println(" mm");
+            </code></pre>
+        <p>
+            <img class="img-medium" src="2tof.png" alt="   ">
+        </p>
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+
+
 
 
 

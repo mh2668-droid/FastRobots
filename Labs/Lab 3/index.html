@@ -187,17 +187,21 @@
 
 
         <p>
-        <img class="img-sm" src="con.png" alt="   ">
+        <img class="img-medium" src="con.png" alt="   ">
         </p>
 
 
         <p>
-            After wiring the first ToF sensor, I scanned the I2C bus using the Example05_wire_I2C example from the Apollo3 Wire library. The scan detected a device at address 0x29, shows that the sensor was properly connected and communicating. Although the VL53L1X datasheet lists the default address as 0x52, this value includes the read/write bit. The actual 7-bit I2C device address is obtained by shifting 0x52 one bit to the right, 0x52 = 01010010, and the 7-bit address for 0x29 is  00101001.
+            After wiring the first ToF sensor, I scanned the I2C bus using the Example05_wire_I2C example from the Apollo3 Wire library. 
+            The scan detected a device at address 0x29, shows that the sensor was properly connected and communicating. 
+            Although the VL53L1X datasheet lists the default address as 0x52, this value includes the read/write bit. 
+            The actual 7-bit I2C device address is obtained by shifting 0x52 one bit to the right, 0x52 = 01010010, 
+            and the 7-bit address for 0x29 is  00101001.
             Therefore, the detected address of 0x29 matches the expected default address of the sensor.
         </p>
 
         <p>
-            <img class="img-medium" src="1tof.png" alt="   ">
+            <img class="img-small" src="1tof.png" alt="   ">
         </p>
     </div>
 
@@ -207,20 +211,72 @@
     <h4>3. TOF Testing </h4>
 
         <p>
-            
+            The VL53L1X TOF provides three ranging modes that trade off measurement range, speed, and stability. Short mode supports distances up to approximately 1.3 meters and provides the fastest updates and strong performance at close range, although readings may become unreliable near its maximum range. 
+            Medium mode extends the range to roughly 3 meters and balances speed and stability, but this mode is only available when using the Pololu VL53L1X library and was therefore not used in this lab. 
+            Long mode supports distances up to approximately 4 meters and is better suited for longer-range detection, 
+            but it typically produces slower updates and can be more sensitive to lighting conditions and surface reflectivity. 
+            For a mobile robot that must react quickly to nearby obstacles, I chose short mode because of its faster update rate. 
+        </p>
+
+
+        <p>
+
+            The sensor was tested using the SparkFun Example1_ReadDistance example, and measurements were collected at 10 mm, 30 mm, 60 mm, 80 mm, 110 mm. 
+            The plot below shows mean measured distance closely followed the true distance across the tested range. 
+
         </p>
 
         <p>
-            <img class="img-medium" src="tof.png" alt="   ">
+            <img class="img-medium" src="output.png" alt="   ">
+        </p>
+
+        <p> 
+            To evaluate repeatability, I held the sensor at a fixed distance of 600 mm while recording a sequence of measurements. The plot below shows that most readings cluster tightly around approximately 606–608 mm. we can see a small number of higher outliers, likely due to measurement noise. 
         </p>
 
 
 
+        <p>
+            <img class="img-medium" src="tof_600_accuracy_hist.png" alt="   ">
+        </p>
 
+        <p>
+            The time series plot below shows that after a brief initial transient, the readings stabilize and fluctuate only slightly, demonstrating good repeatability over time.
+        </p>
+
+        <p>
+            <img class="img-medium" src="tof_600_repeatability_timeseries.png" alt="   ">
+        </p>
+
+        <p>
+
+            Ranging time describes how often the sensor produces a new measurement. 
+            During testing, I used a start–stop ranging cycle produced readings approximately every 50 ms.
+            The update rate decreased to about 100 ms when the sensor was left running continuously without calling stopRanging(),
+             According to the datasheet, this occurs because the VL53L1X uses an internal timing budget that increases measurement stability at the cost of speed when operating continuously.
+             In this setup, the primary limiting factor was the sensor’s internal ranging time rather than the loop execution speed.
+
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <h4>3. Parallel TOF setup </h4>
 
         
 
-    </div>
+
+
+
+
+
+
+
+
+
+
+
 </div>
 
 

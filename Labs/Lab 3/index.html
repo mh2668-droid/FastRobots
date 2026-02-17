@@ -306,54 +306,102 @@
         <p>
             <img class="img-medium" src="2tof.png" alt="   ">
         </p>
-
-
-
-
-
-
-
-
-
-
-
-
     </div>
 
 
 
+    <div class="card">
+
+        <h4>4. TOF Sensors speed</h4>
+
+        <p>
+
+            In future labs, the robot must perform multiple tasks simultaneously, so the code cannot block while waiting for a sensor measurement to finish. The original approach used a blocking loop that waited until the ToF sensor completed a measurement, which prevented the processor from executing other tasks. To improve performance, I configured both VL53L1X sensors to run continuously and used the non-blocking checkForDataReady() function to determine when new measurements were available.
+
+            The loop was designed to print the Artemis clock (millis()) continuously and only print distance data when a new measurement was ready. This allows the processor to continue executing the loop without waiting for the sensor. 
+        </p>
+        <pre><code class="language-cpp">void loop() {
+            unsigned long t = millis();
+            Serial.print(t);
+            if (distanceSensor1.checkForDataReady()) {
+              int d1 = distanceSensor1.getDistance();
+              distanceSensor1.clearInterrupt();
+              Serial.print(", D1(mm)=");
+              Serial.print(d1);
+            }
+            if (distanceSensor2.checkForDataReady()) {
+              int d2 = distanceSensor2.getDistance();
+              distanceSensor2.clearInterrupt();
+              Serial.print(", D2(mm)=");
+              Serial.print(d2);
+            }
+            Serial.println();
+          }
+        </code></pre>
+
+        <p>
+            <img class="img-medium" src="loop.png" alt="   ">
+        </p>
+        <p>
+            From the timestamp output above, consecutive loop iterations increased by approximately 1–2 ms, with occasional larger intervals when additional distance data was printed. This corresponds to a loop frequency of approximately 600 Hz.
+
+            The loop speed is primarily limited by Serial communication bandwidth at 115200 baud, since transmitting text takes significantly longer than checking the sensor status. The VL53L1X sensors generate new measurements only every few tens of milliseconds, so distance values appear intermittently even though the loop executes much faster.
+        </p>
 
 
+    </div>
+
+    <div class="card">
+
+        <h4>5. Time-Stamped ToF + IMU Logging Over BLE</h4>
+
+        <p>
+            To enable untethered data collection, I modified my Lab 1 BLE framework so the Artemis could record time-stamped data from both ToF sensors and the IMU for a fixed period and then transmit the stored samples to my computer over Bluetooth.
+
+When Python sends a recording command, the Artemis clears its buffer, starts a timer using micros(), and begins logging data. During recording, the program continuously updates the latest distance readings from both ToF sensors while also sampling the IMU whenever new data is available. Each stored sample includes the elapsed time since recording began, the two distance measurements, and the IMU acceleration values.
+
+After the recording window ends, Python sends a dump command. The Artemis then streams each stored sample over BLE and finishes with a “DONE” message to indicate that transmission is complete. On the computer side, the Python script collects the incoming data, converts the timestamps from microseconds to seconds, and plots the measurements versus time.
+        </p>
 
 
+        <p>
+            <img class="img-medium" src="tof.png" alt="   ">
+        </p>
+
+        <p>
+            <img class="img-medium" src="imu.png" alt="   ">
+        </p>
+
+    </div>
 
 
+    </div>
 
+    <div class="card">
 
+    <h4>6. Infrared trasmission Discussion</h4>
 
+        <p>
 
+            Many distance sensors rely on infrared light but use different measurement methods. Traditional IR proximity sensors estimate distance based on reflected light intensity or triangulation angle. Because they depend on reflected signal strength, their accuracy is strongly affected by surface color, reflectivity, and ambient lighting. They are inexpensive and simple but can produce unreliable measurements on dark or highly reflective surfaces.
 
+            Time-of-Flight (ToF) sensors such as the VL53L1X measure distance by emitting a laser pulse and timing how long it takes to return. This timing-based method makes ToF sensors more consistent and less sensitive to lighting conditions. They provide accurate measurements in a compact, low-power package, though performance can degrade on highly reflective, absorbent, or transparent surfaces. LIDAR sensors use the same timing principle but scan an environment to create detailed maps; they offer higher performance but are larger and more expensive.
+        </p>
+
+        <p>
+
+            To evaluate surface sensitivity, I measured distances to objects of different colors and materials. Color had only a small effect on accuracy, with darker surfaces producing slightly larger errors due to increased infrared absorption. Material properties had a greater impact: cloth and matte surfaces produced accurate readings, while skin, translucent plastic, and metal introduced larger deviations. Overall, the ToF sensor remained reliable across most surfaces, with noticeable errors only on reflective or partially transparent materials.
+        </p>
+
+    </div>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
     <div class="card">
       <h3>Conclusion</h3>
       <p>
-        In this lab, I used the Artemis IMU to estimate orientation and see how real sensor data behaves. I used FFT and filtering to deal with noise, and a complementary filter to reduce drift while keeping fast response. I also logged 5 seconds of IMU data onboard and sent it over BLE for analysis. Overall, this lab made IMU sensing feel a lot more practical, and I’m ready to use it in later labs.
-
+        This lab gave the robot reliable sensing by integrating two ToF distance sensors and an IMU and getting them to run together without conflicts. I confirmed the sensors produced consistent measurements and set up time-stamped logging with Bluetooth transfer, creating a solid foundation for obstacle detection and future autonomous navigation.
       </p>
         
         

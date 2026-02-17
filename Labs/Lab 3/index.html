@@ -77,7 +77,7 @@
       font-size: 14px;
     }
     .img-small {
-      max-width: 520px;
+      max-width: 360px;
       width: 100%;
       height: auto;
       display: block;
@@ -87,7 +87,7 @@
     }
 
     .img-medium {
-      max-width: 800px;
+      max-width: 520px;
       width: 100%;
       height: auto;
       display: block;
@@ -131,7 +131,7 @@
 
 
     </p>
-    <img class="img-medium" src="wiring.png" alt="connection imu">
+    <img class="img-small" src="wiring.png" alt="connection imu">
     <p>
       <p>
         The picture above shows the wiring diagram. Both sensors share power, ground, SDA, and SCL through the Qwiic multipoint hub. I used detachable Qwiic connections for the I2C lines to make the sensors easy to remove, 
@@ -164,7 +164,7 @@
        
       </p>
        <p>
-        <img class="img-medium" src="ble.png" alt="   ">
+        <img class="img-small" src="ble.png" alt="   ">
          </p>
 
 
@@ -187,7 +187,7 @@
 
 
         <p>
-        <img class="img-medium" src="con.png" alt="   ">
+        <img class="img-small" src="con.png" alt="   ">
         </p>
 
 
@@ -227,7 +227,7 @@
         </p>
 
         <p>
-            <img class="img-medium" src="output.png" alt="   ">
+            <img class="img-small" src="output.png" alt="   ">
         </p>
 
         <p> 
@@ -237,7 +237,7 @@
 
 
         <p>
-            <img class="img-medium" src="tof_600_accuracy_hist.png" alt="   ">
+            <img class="img-small" src="tof_600_accuracy_hist.png" alt="   ">
         </p>
 
         <p>
@@ -245,7 +245,7 @@
         </p>
 
         <p>
-            <img class="img-medium" src="tof_600_repeatability_timeseries.png" alt="   ">
+            <img class="img-small" src="tof_600_repeatability_timeseries.png" alt="   ">
         </p>
 
         <p>
@@ -269,7 +269,7 @@
         </p>
 
         <p>
-            <img class="img-medium" src="w.png" alt="   ">
+            <img class="img-small" src="w.png" alt="   ">
         </p>
         <p>
             The core address reassignment logic in setup() is shown below. 
@@ -285,8 +285,7 @@
             delay(10);
             digitalWrite(SHUTDOWN_PIN, HIGH);    // enable Sensor 2 (still at 0x29)
             delay(50);
-            distanceSensor2.begin();
-            </code></pre>
+            distanceSensor2.begin();</code></pre>
 
         <p>
             After both sensors were initialized,
@@ -301,10 +300,9 @@
             Serial.print(d1);
             Serial.print(" mm\tSensor2 (0x29): ");
             Serial.print(d2);
-            Serial.println(" mm");
-            </code></pre>
+            Serial.println(" mm");</code></pre>
         <p>
-            <img class="img-medium" src="2tof.png" alt="   ">
+            <img class="img-small" src="2tof.png" alt="   ">
         </p>
     </div>
 
@@ -336,11 +334,10 @@
               Serial.print(d2);
             }
             Serial.println();
-          }
-        </code></pre>
+          }</code></pre>
 
         <p>
-            <img class="img-medium" src="loop.png" alt="   ">
+            <img class="img-small" src="loop.png" alt="   ">
         </p>
         <p>
             From the timestamp output above, consecutive loop iterations increased by approximately 1–2 ms, with occasional larger intervals when additional distance data was printed. This corresponds to a loop frequency of approximately 600 Hz.
@@ -359,17 +356,18 @@
             To enable untethered data collection, I modified my Lab 1 BLE framework so the Artemis could record time-stamped data from both ToF sensors and the IMU for a fixed period and then transmit the stored samples to my computer over Bluetooth.
 
 When Python sends a recording command, the Artemis clears its buffer, starts a timer using micros(), and begins logging data. During recording, the program continuously updates the latest distance readings from both ToF sensors while also sampling the IMU whenever new data is available. Each stored sample includes the elapsed time since recording began, the two distance measurements, and the IMU acceleration values.
-
+        </p>
+        <p>
 After the recording window ends, Python sends a dump command. The Artemis then streams each stored sample over BLE and finishes with a “DONE” message to indicate that transmission is complete. On the computer side, the Python script collects the incoming data, converts the timestamps from microseconds to seconds, and plots the measurements versus time.
         </p>
 
 
         <p>
-            <img class="img-medium" src="tof.png" alt="   ">
+            <img class="img-small" src="tof.png" alt="   ">
         </p>
 
         <p>
-            <img class="img-medium" src="imu.png" alt="   ">
+            <img class="img-small" src="imu.png" alt="   ">
         </p>
 
     </div>
@@ -394,14 +392,19 @@ After the recording window ends, Python sends a dump command. The Artemis then s
         </p>
 
     </div>
-</div>
+
+    </div>
+
 
 
 
     <div class="card">
-      <h3>Conclusion</h3>
+      <h4>Conclusion</h4>
       <p>
-        This lab gave the robot reliable sensing by integrating two ToF distance sensors and an IMU and getting them to run together without conflicts. I confirmed the sensors produced consistent measurements and set up time-stamped logging with Bluetooth transfer, creating a solid foundation for obstacle detection and future autonomous navigation.
+        This lab gave the robot reliable sensing by integrating two ToF distance sensors and an 
+        IMU and getting them to run together without conflicts. I confirmed the sensors produced consistent measurements 
+        and set up time-stamped logging with Bluetooth transfer, creating a solid foundation for obstacle detection and 
+        future autonomous navigation.
       </p>
         
         

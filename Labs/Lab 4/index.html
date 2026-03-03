@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lab 3 | Fast Robots</title>
+  <title>Lab 4 | Fast Robots</title>
   <link rel="stylesheet" href="../../style.css" />
   <!-- MathJax for LaTeX equations -->
   <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -95,6 +95,15 @@
       border-radius: 10px;
       border: 1px solid var(--border);
     }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
 
@@ -122,7 +131,7 @@
       </p>
 
     </p>
-    <img class="img-medium" src="wiring.png" alt="">
+    <img class="img-big" src="wiring.png" alt="">
     <p>
       <p>
         The figure above is adapted from Stephan W. (2024).
@@ -221,7 +230,7 @@ Below is the video showing the regulation.
         </p>
         <pre><code class="language-cpp">#define MOTOR_A_FWD 3   
           #define MOTOR_A_BWD 4   
-          int speedVal = 50;      // ~20% duty cycle
+          int speedVal = 50;      
           void setup() {
               pinMode(MOTOR_A_FWD, OUTPUT);
               pinMode(MOTOR_A_BWD, OUTPUT);
@@ -231,17 +240,9 @@ Below is the video showing the regulation.
               analogWrite(MOTOR_A_FWD, speedVal);
               analogWrite(MOTOR_A_BWD, 0);
               delay(3000);
-              // STOP
-              analogWrite(MOTOR_A_FWD, 0);
-              analogWrite(MOTOR_A_BWD, 0);
-              delay(1500);
               // REVERSE
               analogWrite(MOTOR_A_FWD, 0);
               analogWrite(MOTOR_A_BWD, speedVal);
-              delay(3000);
-              // STOP
-              analogWrite(MOTOR_A_FWD, 0);
-              analogWrite(MOTOR_A_BWD, 0);
               delay(3000);
           }</code></pre>
 
@@ -263,7 +264,6 @@ Below is the video showing the regulation.
           // Motor B (right)
           #define MOTOR_B_FWD 1
           #define MOTOR_B_BWD 0
-          
           int speedVal = 80;   
 
           void setup() {
@@ -272,7 +272,6 @@ Below is the video showing the regulation.
             pinMode(MOTOR_B_FWD, OUTPUT);
             pinMode(MOTOR_B_BWD, OUTPUT);
           }
-          
           void loop() {
             // FORWARD
             analogWrite(MOTOR_A_FWD, speedVal);
@@ -280,7 +279,6 @@ Below is the video showing the regulation.
             analogWrite(MOTOR_B_FWD, speedVal);
             analogWrite(MOTOR_B_BWD, 0);
             delay(3000);
-          
             // REVERSE
             analogWrite(MOTOR_A_FWD, 0);
             analogWrite(MOTOR_A_BWD, speedVal);
@@ -305,10 +303,21 @@ Below is the video showing the regulation.
 
     <div class="card">
 
-        <h4>4. </h4>
+        <h4>4. Final Component Setup </h4>
+
+
+
 
         <p>
-            
+          <img class="img-small" src="F.png" alt="   ">
+      </p>
+
+        <p>
+
+          The picture above shows the fully assembled robot with all components secured inside the chassis.
+           The Artemis board, dual motor drivers, motor driver battery, ToF sensors, and IMU are mounted firmly to prevent movement during operation. 
+           The Artemis battery is placed at the bottom of the original chassis battery room for better storage. 
+            Wires are routed compactly to reduce clutter and avoid interference with moving parts.
         </p>
 
        
@@ -318,36 +327,103 @@ Below is the video showing the regulation.
 
     <div class="card">
 
-        <h4>5. TOF Sensors speed</h4>
+        <h4>5. BLE control setup </h4>
 
+        <p>
+
+          To control the car in open-loop, I programmed the Artemis to receive BLE commands from my laptop. On the Arduino side, the firmware listens for a DRIVE command that contains two signed PWM values formatted as left and right. The code parses the two values, clamps them to the valid range (−255 to 255), and then drives each motor using analogWrite on the H-bridge inputs (positive PWM drives forward, negative drives backward). A STOP command sets all motor PWM outputs to zero. On the Python side, I used helper functions to send DRIVE and STOP over BLE, and I ran timed motions by calling drive_for(left_pwm, right_pwm, duration_s) (for example, drive_for(80, 115, 2) to drive forward for 2 seconds with different left and right PWM values for calibration).
+
+        </p>
+
+
+        <pre><code class="language-cpp">// Arduino snippet (BLE parsing + motor output)
+          case DRIVE: {
+            int leftPWM, rightPWM;
+            robot_cmd.get_next_value(leftPWM);
+            robot_cmd.get_next_value(rightPWM);
+            setBothPWM(leftPWM, rightPWM);   // uses analogWrite to drive motors
+            txNotify("OK");
+            break;
+          }
+          
+          case STOP:
+            stopBoth();                      // sets all analogWrite outputs to 0
+            txNotify("STOPPED");
+            break;</code></pre>
+
+
+            <pre><code class="language-python"># Python snippet (sending DRIVE/STOP)
+          def stop():
+              try:
+                  ble.send_command(CMD.STOP, "")
+              except Exception as e:
+                  print("STOP failed (disconnected):", e)
+          
+          def drive(left_pwm: int, right_pwm: int):
+              left_pwm  = max(-255, min(255, int(left_pwm)))
+              right_pwm = max(-255, min(255, int(right_pwm)))
+              ble.send_command(CMD.DRIVE, f"{left_pwm}|{right_pwm}")
+          
+          def drive_for(left_pwm, right_pwm, duration_s):
+              drive(left_pwm, right_pwm)
+              time.sleep(duration_s)
+              stop()</code></pre>
 
 
     </div>
 
     <div class="card">
 
-        <h4>5. </h4>
+        <h4>6. Lower Limit PWM and Calibration </h4>
+        <P>
+
+          After setting up BLE drive control, I tested the minimum PWM values required for the robot to move on the ground. I observed that the robot needs more power to start moving from rest due to static friction. The lowest values that consistently produced forward motion were approximately (15, 50) for the left and right motors. Below this range, one of the wheels would stall. I also tested higher values and found that the robot could still move straight around (200, 255). A stable mid-range value for straight driving was (80, 115).
+        </P>
+
+        <P>
+          From these tests, it was clear that the two motors do not spin at the same rate for the same PWM input. To compensate for this mismatch, I introduced a calibration factor based on the tested data. Using the mid-range straight-driving values (80, 115), the ratio between the motors is approximately 0.70. I then applied this scaling so that for a given base PWM value p, the left motor receives 0.70p while the right motor receives p. This allows the robot to maintain a fairly straight path across different speeds.
+        </P>
 
 
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/UlocZ1UlDHs" allowfullscreen></iframe>
+        </div>
 
+        <p>
+          The video above shows the robot following a straight tape line for at least 2 meters. 
+          The robot started a little off centered following the line on the ground but still remains mostly straight at the end,
+        </p>
     </div>
 
+    <div class="card">
 
+      <h4>7. Open loop Control and Additional Discussion</h4>
+      <P>
+        To demonstrate open-loop, I programmed the robot to execute a timed sequence of movements using BLE commands. The robot drove forward for 2 seconds and then performed an in-place turn for 1 second using preset PWM values. Since the motion was based only on fixed timing and motor commands without any feedback correction, this demonstrates open-loop control. A video below shows the robot completing the sequence successfully.
+        
+      </P>
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/AwfEgoBP-LI" allowfullscreen></iframe>
+      </div>
+
+      <p>
+        The video above shows the robot following a straight tape line for at least 2 meters. 
+        The robot started a little off centered following the line on the ground but still remains mostly straight at the end,
+      </p>
+
+      <p>
+
+        Using the oscilloscope measurement function, I estimated the PWM frequency generated by analogWrite() to be approximately 267 Hz. This frequency is sufficient for controlling our DC gear motors because the motor’s mechanical inertia smooths the voltage pulses and speed is primarily determined by duty cycle. Increasing the PWM frequency could reduce audible noise and torque ripple, but the default frequency was adequate for stable operation in this lab.
+      </p>
+
+      <p>
+        Through experimental testing, I determined that the robot requires a higher PWM value to start moving than to remain in motion due to static friction. After the robot was already moving, I gradually reduced the PWM and found that the lowest values that could sustain continuous forward motion were approximately 6 for the left motor and 20 for the right motor. Below these values, one or both wheels would stall.
+      </p>
+  </div>
    
 
 
-  
 
-
-
-
-    <div class="card">
-      <h4>Conclusion</h4>
-      <p>
-
-      </p>
-                
-    </div>
 
     <div class="footer">
       <a class="back-button" href="../../index.html">← Back to Main Page</a>

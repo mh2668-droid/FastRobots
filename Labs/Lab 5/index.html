@@ -401,7 +401,7 @@
 
 
         <p>
-          <img class="img-small" src="0.001|0.00015|2.png" alt="   ">
+          <img class="img-small" src="0.001|0.00015|0 2.png" alt="   ">
           <img class="img-small" src="0.001|0.00015|0 1.png" alt="   ">
           <img class="img-small" src="0.001|0.00015|0.png" alt="   ">
       </p>
@@ -438,205 +438,88 @@
 
     <div class="card">
 
-    <h4>3. </h4>
+    <h4>3. Extrapolation</h4>
 
         <p>
-
-          First, To verify that the motor driver and wiring were functioning correctly, the robot was placed on its side so the wheels could spin freely forward and backward. The motor driver was powered using an external power supply as we discussed earlier, and all grounds were connected.  
-             
-        </p>
-        <pre><code class="language-cpp">#define MOTOR_A_FWD 3   
-          #define MOTOR_A_BWD 4   
-          int speedVal = 50;      
-          void setup() {
-              pinMode(MOTOR_A_FWD, OUTPUT);
-              pinMode(MOTOR_A_BWD, OUTPUT);
-          }
-          void loop() {
-              // FORWARD
-              analogWrite(MOTOR_A_FWD, speedVal);
-              analogWrite(MOTOR_A_BWD, 0);
-              delay(3000);
-              // REVERSE
-              analogWrite(MOTOR_A_FWD, 0);
-              analogWrite(MOTOR_A_BWD, speedVal);
-              delay(3000);
-          }</code></pre>
-
-
-        <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/bUil_DzBMAc" allowfullscreen></iframe>
-        </div>
-
-
-        <p>
-          After verifying a single motor, both motor drivers were connected and tested together to confirm that the robot could drive both wheels in the same direction and reverse them simultaneously. 
-
-          The following code was used to run both motors forward and backward:
+          At first, the PID controller was limited by the update rate of the ToF sensor, since the controller could only react when a new distance measurement became available. To improve this, I decoupled the control loop from the sensor update rate so that the PID controller runs every loop iteration, even if the ToF sensor has not produced a new reading yet. In my implementation, the ToF sensor only updates the stored distance value when new data is ready, while the controller continues running using the most recent distance estimate.
         </p>
 
-        <pre><code class="language-cpp">// Motor A (left)
-          #define MOTOR_A_FWD 3
-          #define MOTOR_A_BWD 4
-          // Motor B (right)
-          #define MOTOR_B_FWD 1
-          #define MOTOR_B_BWD 0
-          int speedVal = 80;   
-
-          void setup() {
-            pinMode(MOTOR_A_FWD, OUTPUT);
-            pinMode(MOTOR_A_BWD, OUTPUT);
-            pinMode(MOTOR_B_FWD, OUTPUT);
-            pinMode(MOTOR_B_BWD, OUTPUT);
-          }
-          void loop() {
-            // FORWARD
-            analogWrite(MOTOR_A_FWD, speedVal);
-            analogWrite(MOTOR_A_BWD, 0);
-            analogWrite(MOTOR_B_FWD, speedVal);
-            analogWrite(MOTOR_B_BWD, 0);
-            delay(3000);
-            // REVERSE
-            analogWrite(MOTOR_A_FWD, 0);
-            analogWrite(MOTOR_A_BWD, speedVal);
-            analogWrite(MOTOR_B_FWD, 0);
-            analogWrite(MOTOR_B_BWD, speedVal);
-            delay(3000);
-          }</code></pre>
-
-          <p>
-
-            When running both motors together, the video also shows that the two wheels do not spin at the exact same rate. This is expected due to small differences in motors, gearboxes, and friction, and it causes the car to drift when driving on the ground. In a later section, I show how I addressed this by adding a calibration factor to better match the two motor speeds.
-          </p>
-
-        <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/iV--AUkRDEg" allowfullscreen></iframe>
-        </div>
-    </div>
-
-
-
-
-
-    <div class="card">
-
-        <h4>4. Final Component Setup </h4>
-
-
-
-
-        <p>
-          <img class="img-small" src="F.png" alt="   ">
-      </p>
-
-        <p>
-
-          The picture above shows the fully assembled robot with all components secured inside the chassis.
-           The Artemis board, dual motor drivers, motor driver battery, ToF sensors, and IMU are mounted firmly to prevent movement during operation. 
-           The Artemis battery is placed at the bottom of the original chassis battery room for better storage. 
-            Wires are routed compactly to reduce clutter and avoid interference with moving parts.
-        </p>
-
-       
-    </div>
-
-
-
-    <div class="card">
-
-        <h4>5. BLE control setup </h4>
-
-        <p>
-
-          To control the car in open-loop, I programmed the Artemis to receive BLE commands from my laptop. On the Arduino side, the firmware listens for a DRIVE command that contains two signed PWM values formatted as left and right. The code parses the two values, clamps them to the valid range (−255 to 255), and then drives each motor using analogWrite on the H-bridge inputs (positive PWM drives forward, negative drives backward). A STOP command sets all motor PWM outputs to zero. On the Python side, I used helper functions to send DRIVE and STOP over BLE, and I ran timed motions by calling drive_for(left_pwm, right_pwm, duration_s) (for example, drive_for(80, 115, 2) to drive forward for 2 seconds with different left and right PWM values for calibration).
-
-        </p>
-
-
-        <pre><code class="language-cpp">// Arduino snippet (BLE parsing + motor output)
-          case DRIVE: {
-            int leftPWM, rightPWM;
-            robot_cmd.get_next_value(leftPWM);
-            robot_cmd.get_next_value(rightPWM);
-            setBothPWM(leftPWM, rightPWM);   // uses analogWrite to drive motors
-            txNotify("OK");
-            break;
-          }
-          
-          case STOP:
-            stopBoth();                      // sets all analogWrite outputs to 0
-            txNotify("STOPPED");
-            break;</code></pre>
-
-
-            <pre><code class="language-python"># Python snippet (sending DRIVE/STOP)
-          def stop():
-              try:
-                  ble.send_command(CMD.STOP, "")
-              except Exception as e:
-                  print("STOP failed (disconnected):", e)
-          
-          def drive(left_pwm: int, right_pwm: int):
-              left_pwm  = max(-255, min(255, int(left_pwm)))
-              right_pwm = max(-255, min(255, int(right_pwm)))
-              ble.send_command(CMD.DRIVE, f"{left_pwm}|{right_pwm}")
-          
-          def drive_for(left_pwm, right_pwm, duration_s):
-              drive(left_pwm, right_pwm)
-              time.sleep(duration_s)
-              stop()</code></pre>
-
-
-    </div>
-
-    <div class="card">
-
-        <h4>6. Lower Limit PWM and Calibration </h4>
         <P>
+          In the main loop, the ToF update and the control update are handled separately. The controller runs whenever control is enabled, while the ToF sensor only updates when new data is available.
+        </P>
+        <pre><code class="language-cpp">void loop() {
+          imu_update();
+          if (g_tof_running) {
+            tof_update();
+          }
+          ble_update();
+          if (g_control_enabled) {
+            control_update();
+          }
+        }</code></pre>
 
-          After setting up BLE drive control, I tested the minimum PWM values required for the robot to move on the ground. I observed that the robot needs more power to start moving from rest due to static friction. The lowest values that consistently produced forward motion were approximately (15, 50) for the left and right motors. Below this range, one of the wheels would stall. I also tested higher values and found that the robot could still move straight around (200, 255). A stable mid-range value for straight driving was (80, 115).
+        <P>
+          I measured the approximate execution rates of both processes. The control loop runs at about 127.04 Hz, while the ToF sensor produces new measurements at about 9.98 Hz, Which is a little low but this means the controller runs roughly 12 times faster than the sensor, so simply reusing the last ToF measurement would introduce noticeable delay in the controller response.
         </P>
 
         <P>
-          From these tests, it was clear that the two motors do not spin at the same rate for the same PWM input. To compensate for this mismatch, I introduced a calibration factor based on the tested data. Using the mid-range straight-driving values (80, 115), the ratio between the motors is approximately 0.70. I then applied this scaling so that for a given base PWM value p, the left motor receives 0.70p while the right motor receives p. This allows the robot to maintain a fairly straight path across different speeds.
+          To address this issue, I implemented a simple linear extrapolation algorithm to estimate the robot’s current distance between ToF updates. Every time a new ToF reading is received, I store the last two measurements along with their timestamps. These values are used to estimate the slope of the distance change:
+        </P>
+
+        equation:m = \frac{d_2 - d_1}{t_2 - t_1}
+
+        <P>
+          Then, if the controller runs before a new sensor measurement arrives, the current distance is estimated using the elapsed time since the last sample:
+        </P>
+
+        equations:d_{est} = d_2 + m (t - t_2)
+
+        <P>
+          In my controller implementation, both the raw distance and the extrapolated distance are available, but the extrapolated value is used for the control calculation because it better represents the robot’s current position.
         </P>
 
 
-        <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/UlocZ1UlDHs" allowfullscreen></iframe>
-        </div>
+        <pre><code class="language-cpp">const float raw_dist_mm = control_get_raw_distance_mm();
+          const float est_dist_mm = control_get_estimated_distance_mm();
+          
+          const float error = g_pid.setpoint_mm - est_dist_mm;</code></pre>
+
+        <P>
+
+          This allows the PID controller to keep updating even when the ToF sensor has not returned a new measurement yet. As a result, the control loop can operate at the full controller rate while still incorporating new sensor readings whenever they become available.
+        </P>
 
         <p>
-          The video above shows the robot following a straight tape line for at least 2 meters. 
-          The robot started a little off centered following the line on the ground but still remains mostly straight at the end,
+          <img class="img-small" src="1.png" alt="   ">
+
+      </p>
+
+
+
+        <p>
+
+          The figure below compares the raw ToF measurements with the extrapolated distance estimate used by the controller. 
+
         </p>
+
     </div>
+
+
+
+
 
     <div class="card">
 
-      <h4>7. Open loop Control and Additional Discussion</h4>
-      <P>
-        To demonstrate open-loop, I programmed the robot to execute a timed sequence of movements using BLE commands. The robot drove forward for 2 seconds and then performed an in-place turn for 1 second using preset PWM values. Since the motion was based only on fixed timing and motor commands without any feedback correction, this demonstrates open-loop control. A video below shows the robot completing the sequence successfully.
-        
-      </P>
-      <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/AwfEgoBP-LI" allowfullscreen></iframe>
-      </div>
+        <h4>4. wind-up protection</h4>
 
-      <p>
-        The video above shows the robot following a straight tape line for at least 2 meters. 
-        The robot started a little off centered following the line on the ground but still remains mostly straight at the end,
-      </p>
 
       <p>
 
-        Using the oscilloscope measurement function, I estimated the PWM frequency generated by analogWrite() to be approximately 267 Hz. This frequency is sufficient for controlling our DC gear motors because the motor’s mechanical inertia smooths the voltage pulses and speed is primarily determined by duty cycle. Increasing the PWM frequency could reduce audible noise and torque ripple, but the default frequency was adequate for stable operation in this lab.
+        My Artemis board was shorted............
+
       </p>
 
-      <p>
-        Through experimental testing, I determined that the robot requires a higher PWM value to start moving than to remain in motion due to static friction. After the robot was already moving, I gradually reduced the PWM and found that the lowest values that could sustain continuous forward motion were approximately 6 for the left motor and 20 for the right motor. Below these values, one or both wheels would stall.
-      </p>
-  </div>
+
    
 
 

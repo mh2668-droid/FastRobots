@@ -136,6 +136,9 @@
       <p>
         The code was divided into the following modules:
 
+      </p>
+      <p>
+
 
         <code class="language-cpp">	•	ble.hpp – handles Bluetooth communication and command parsing
           •	tof.hpp – manages the two ToF sensors and distance measurements
@@ -154,6 +157,10 @@
       <p>
 
         For debugging and control, I implemented several BLE commands that allow the Python interface to control the robot. These commands allow me to start or stop the controller, enable the motors, start ToF ranging, and update controller parameters. For example, I implemented commands such as:
+        
+        
+      </p>
+      <p>
         <code class="language-cpp">•	ENABLE_MOTORS – allows motor PWM commands to be sent
         •	DISABLE_MOTORS – immediately stops the motors
         •	START_TOF / STOP_TOF – start or stop ToF sensor ranging
@@ -190,17 +197,57 @@
         ble.send_command(CMD.SET_SETPOINT, "300")
         ble.send_command(CMD.START_CONTROL, "")</code></pre>
 
+        <P>
+
+          During each experiment, I log debugging data such as timestamps, raw ToF distance measurements, estimated distance, and the controller output directly on the Artemis while the controller is running. Instead of continuously sending this data over BLE, I first store the values locally in arrays. I chose this approach because sending data over BLE during every control loop iteration could slow down the controller and affect the robot’s behavior. By logging the data locally, the control loop can run smoothly while still recording the full system response for later analysis.
+
+        </P>
+
+        <p>
+          Example of logging controller data on the Artemis:
+        </p>
+
+        <pre><code class="language-cpp">g_pid_log[g_pid_log_count].t_ms = t_ms;
+          g_pid_log[g_pid_log_count].raw_dist_mm = raw_dist_mm;
+          g_pid_log[g_pid_log_count].est_dist_mm = est_dist_mm;
+          g_pid_log[g_pid_log_count].error = error;
+          g_pid_log[g_pid_log_count].u = u;
+          g_pid_log_count++;</code></pre>
+
+        <p>
+
+          After the maneuver finishes, I send the stored log data back to the computer over BLE. Each data point is formatted into a message and transmitted through the BLE characteristic so that the Python script can receive it.
+        </p>
 
 
 
         <P>
 
-
-
+          Example of sending logged data over BLE:
         </P>
 
 
+        <pre><code class="language-cpp">EString msg;
+          msg.clear();
+          msg.append(t_ms);
+          msg.append("|");
+          msg.append(raw_dist_mm);
+          msg.append("|");
+          msg.append(u);
+          
+          g_tx_characteristic.writeValue(msg.c_str());</code></pre>
 
+        <p>
+
+          On the Python side, I receive these messages through the BLE interface and store them in arrays. I then use this data to generate plots such as distance versus time in order to analyze the behavior of the controller.
+        </p>
+
+        <p>
+          Example of receiving data in Python:
+        </p>
+
+        <pre><code class="language-python">msg = ble.receive_string(ble.uuid["RX_STRING"])
+          data.append(msg)</code></pre>
 
 
 

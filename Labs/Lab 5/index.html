@@ -120,8 +120,8 @@
     <div class="card">
       <h3>Objective</h3>
       <p>
-        The goal of this lab is to implement a closed-loop controller that allows the robot to maintain a desired distance from a wall using Time-of-Flight sensor measurements. By implementing and testing P, PI, and PID control, 
-        the system adjusts motor speeds in real time to reduce distance error and achieve stable wall-distance regulation.
+       
+The goal of this lab is to implement a closed-loop controller that allows the robot to maintain a desired distance from a wall using Time-of-Flight sensor measurements. By testing P, PI, and PID control, the system adjusts motor speeds to reduce distance error and regulate wall distance.
         
       </p>
     </div>
@@ -130,7 +130,7 @@
       <h3>Pre Lab</h3>
 
       <p>
-        Before implementing the controller, I reorganized my firmware using a modular structure similar to the approach shown by Stephan W. Instead of keeping all functionality inside a single <code>.ino</code> file, each major subsystem was moved into its own header file. This makes the code easier to read, debug, and modify during controller tuning.
+        Before implementing the controller, I reorganized my firmware using a modular structure similar to the approach shown by Stephan W. Instead of keeping everything inside a single .ino file, each subsystem was moved into its own header file to make debugging and modification easier.
       </p>
 
       <p>The firmware was divided into the following modules:</p>
@@ -200,14 +200,14 @@ ble.send_command(CMD.START_CONTROL, "")</code></pre>
 
 
       <p>
-        I also implemented a simple hard stop in the firmware so the robot stops if the controller is disabled or if motor output is not allowed. This prevents the robot from continuing to move if the experiment ends or if communication stops.
+        I also implemented a hard stop so the robot stops if the controller is disabled or communication stops.
       </p>
       <pre><code class="language-cpp">if (!g_motors_enabled || !g_control_enabled) {
   motors_stop();
   return;
 }</code></pre>
       <p>
-        During the run, I logged debugging data such as timestamps, raw ToF distance, estimated distance, and controller output directly on the Artemis. Instead of sending this data over BLE during every control loop iteration, I stored it locally in arrays and sent it after the experiment finished. I used this approach so BLE communication would not slow down the control loop.
+        During the run, I logged timestamps, raw ToF distance, estimated distance, and controller output directly on the Artemis. The data was stored locally and sent over BLE after the experiment finished.
       </p>
 
       <pre><code class="language-cpp">g_pid_log[g_pid_log_count].t_ms = t_ms;
@@ -241,7 +241,7 @@ data.append(msg)</code></pre>
       </p>
 
       <P>
-        During each control loop iteration, the robot reads the most recent ToF measurement, computes the distance error relative to the target, calculates the control output, applies output limits, converts the output into motor commands, and logs the controller data for later analysis.
+        During each control loop iteration, the robot reads the ToF measurement, computes the distance error, calculates the control output, applies limits, sends motor commands, and logs controller data.
       </P>
 
 
@@ -364,7 +364,7 @@ data.append(msg)</code></pre>
 
         <P>
 
-          I first tested the controller using only proportional control with gains K_p = 0.001, K_i = 0, and K_d = 0. As shown in the ToF vs time plot, the robot approaches the wall quickly and slows down as the error decreases. However, the robot overshoots the target distance and settles too close to the wall, around 230–240 mm instead of the desired 304 mm. The motor input plot shows the controller applying a small corrective command after the overshoot, but the output becomes too small to move the robot back to the setpoint.
+          I first tested the controller using only proportional control with gains K_p = 0.001, K_i = 0, and K_d = 0. As shown in the ToF vs time plot, the robot approaches the wall quickly and slows down as the error decreases. However, the robot overshoots and settles too close to the wall. The motor input plot shows the controller applying a small corrective command after the overshoot, but the output becomes too small to move the robot back to the setpoint.
 
         </P>
 

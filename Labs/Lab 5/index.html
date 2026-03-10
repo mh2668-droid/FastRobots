@@ -166,10 +166,12 @@
         <li><code>SET_SETPOINT</code> – set the target wall distance</li>
         <li><code>START_CONTROL / STOP_CONTROL</code> – start or stop the controller</li>
       </ul>
+      </P>
+
       <p>
         During each experiment, I start the controller from Python over BLE and let the robot run for a fixed amount of time while storing debugging data locally. After the run finishes, the robot stops and the logged data is sent back to the computer for plotting and analysis.
       </p>
-      </P>
+      
 
       <p>
         On the Arduino side, incoming BLE messages are parsed and executed using a command handler. For example, the PID gains can be updated directly from Python using the following command handler:
@@ -436,7 +438,7 @@ data.append(msg)</code></pre>
     <h4>3. Extrapolation</h4>
 
         <p>
-          At first, the PID controller was limited by the update rate of the ToF sensor, since the controller could only react when a new distance measurement became available. To improve this, I decoupled the control loop from the sensor update rate so that the PID controller runs every loop iteration, even if the ToF sensor has not produced a new reading yet. In my implementation, the ToF sensor only updates the stored distance value when new data is ready, while the controller continues running using the most recent distance estimate.
+          At first, the PID controller was limited by the update rate of the ToF sensor because the controller could only react when a new distance measurement became available. To improve this, I decoupled the control loop from the sensor update rate so that the PID controller runs every loop iteration, even if the ToF sensor has not produced a new reading yet. In my implementation, the ToF sensor only updates the stored distance value when new data is ready, while the controller continues running using the most recent distance estimate.
         </p>
 
         <P>
@@ -454,7 +456,7 @@ data.append(msg)</code></pre>
         }</code></pre>
 
         <P>
-          I measured the approximate execution rates of both processes. The control loop runs at about 127.04 Hz, while the ToF sensor produces new measurements at about 9.98 Hz, Which is a little low but this means the controller runs roughly 12 times faster than the sensor, so simply reusing the last ToF measurement would introduce noticeable delay in the controller response.
+          I measured the approximate execution rates of both processes. The control loop runs at about 127.04 Hz, while the ToF sensor produces new measurements at about 9.98 Hz. This means the controller runs about 12 times faster than the sensor, so simply reusing the last ToF reading would introduce noticeable delay in the controller response.
         </P>
 
         <P>
@@ -474,9 +476,20 @@ data.append(msg)</code></pre>
         <p>\[
           d_{est} = d_2 + m (t - t_2)
         \]</p>
+        <pre><code class="language-cpp">static inline float control_get_estimated_distance_mm() {
+  if (!g_tof2_last.valid) return 0.0f;
+  if (!g_tof2_prev.valid) return (float)g_tof2_last.d_mm;
+
+  float dt_hist = (g_tof2_last.t_ms - g_tof2_prev.t_ms) * 0.001f;
+  if (dt_hist <= 0.0f) return (float)g_tof2_last.d_mm;
+
+  float slope = ((float)g_tof2_last.d_mm - (float)g_tof2_prev.d_mm) / dt_hist;
+  float dt_now = (millis() - g_tof2_last.t_ms) * 0.001f;
+  return (float)g_tof2_last.d_mm + slope * dt_now;
+}</code></pre>
 
         <P>
-          In my controller implementation, both the raw distance and the extrapolated distance are available, but the extrapolated value is used for the control calculation because it better represents the robot’s current position.
+          In my controller implementation, both the raw distance and the extrapolated distance are available, but the extrapolated value is used for the control calculation because it better represents the robot's current position between ToF updates.
         </P>
 
 
@@ -486,21 +499,14 @@ data.append(msg)</code></pre>
           const float error = g_pid.setpoint_mm - est_dist_mm;</code></pre>
 
         <P>
-
           This allows the PID controller to keep updating even when the ToF sensor has not returned a new measurement yet. As a result, the control loop can operate at the full controller rate while still incorporating new sensor readings whenever they become available.
         </P>
 
         <p>
-          <img class="img-small" src="1.png" alt="   ">
-
-      </p>
-
-
-
-        <p>
-
           The figure below compares the raw ToF measurements with the extrapolated distance estimate used by the controller. 
-
+        </p>
+        <p>
+          <img class="img-small" src="4.png" alt="   ">
         </p>
 
     </div>
@@ -516,7 +522,19 @@ data.append(msg)</code></pre>
 
       <p>
 
-        My Artemis board was shorted............
+        My Artemis board was shorted............More write up coming soon.........
+
+      </p>
+
+
+      <div class="card">
+
+        <h4>Conclusion</h4>
+
+
+      <p>
+
+        
 
       </p>
 

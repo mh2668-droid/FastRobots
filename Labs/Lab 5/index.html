@@ -189,8 +189,10 @@
 
       
 
-      <pre><code class="language-python">ble.send_command(CMD.SET_PID_GAINS, f"{Kp}|{Ki}|{Kd}")
-        ble.send_command(CMD.SET_SETPOINT, "300")
+      <pre><code class="language-python">ble.send_command(CMD.START_TOF, "")
+        ble.send_command(CMD.ENABLE_MOTORS, "")
+        ble.send_command(CMD.SET_PID_GAINS, f"{Kp}|{Ki}|{Kd}")
+        ble.send_command(CMD.SET_SETPOINT, "304")
         ble.send_command(CMD.START_CONTROL, "")</code></pre>
 
         <P>
@@ -256,21 +258,113 @@
       <div class="card">
 
 
-      <h4>1. Disassembly</h4>
+      <h4>1. Position Control setup </h4>
       <p>
-        I first took the car apart and cut out the factory PCB, below is an after picture with no hardware installed. 
+        With the BLE command interface and logging framework already set up in the pre-lab, I then implemented the wall-distance controller that allows the robot to approach and maintain a desired distance from a wall. The controller was implemented in control.hpp and uses feedback from the front Time-of-Flight sensor to continuously update the motor commands. For all of my experiments, I used a target distance of approximately 304 mm from the wall.
       </p>
 
-      </p>
-      <img class="img-small" src="E.png" alt="">
-      
-     </div>
+      <P>
+        During each control loop iteration, the robot reads the most recent ToF measurement, computes the distance error relative to the target, calculates the control output, applies output limits, converts the output into motor commands, and logs the controller data for later analysis.
+      </P>
 
+      <p>
+        Distance Measurement and Error Calculation
+      </p>
+
+      <P>
+        For the controller I only used the front ToF sensor. In my hardware setup this sensor is the XSHUT-controlled sensor, which is stored as g_tof2. I created a helper function that returns the most recent valid distance measurement:
+      </P>
+
+      <P>
+        The controller then computes the wall-distance error using
+      </P>
+
+      Equations:e(t) = \text{setpoint} - \text{distance}
+
+      <pre><code class="language-cpp">const float error = g_pid.setpoint_mm - dist_mm;</code></pre>
+
+      <P>
+
+        If the robot is farther than the desired distance, the error becomes positive and the robot should drive forward. If the robot is too close to the wall, the error becomes negative and the robot should move backward.
+      </P>
+
+      <P>
+        PID Controller Implementation
+      </P>
+
+      <P>
+        The robot motion is controlled using a PID controller
+      </P>
+
+      equations:u(t) = K_p e(t) + K_i \int e(t) dt + K_d \frac{de(t)}{dt}
+
+      <P>
+        In my implementation the PID controller is computed in discrete time using the following code:
+      </P>
+
+      <pre><code class="language-cpp">const float error = g_pid.setpoint_mm - dist_mm;
+        float dt = (now_ms - g_pid.prev_t_ms) * 0.001f;
+        if (dt <= 0.0f) dt = 0.001f;
+        // integral term
+        g_pid.integral += error * dt;
+        g_pid.integral = clamp(g_pid.integral, g_pid.integral_min, g_pid.integral_max);
+        // derivative term
+        const float derivative = (error - g_pid.prev_error) / dt;
+        // individual PID terms
+        const float p_term = g_pid.kp * error;
+        const float i_term = g_pid.ki * g_pid.integral;
+        const float d_term = g_pid.kd * derivative;
+        // final controller output
+        float u = p_term + i_term + d_term;</code></pre>
+
+        <P>
+          The time step dt is computed from the system clock. The integral term accumulates the error over time and is clamped to prevent integral windup. The derivative term estimates the rate of change of the error between successive control updates.
+        </P>
+
+        <P>
+          Output Limiting and Motor Command
+        </P>
+
+        <P>
+          During my first experiments the robot approached the wall too quickly and often overshot the desired distance. To improve this behavior, I implemented a distance-dependent output limiter so that the maximum control signal decreases as the robot gets closer to the target.
+        </P>
+
+        <pre><code class="language-cpp">static inline float control_get_dynamic_limit(float error_abs_mm) {
+          if (error_abs_mm > 400.0f) return 0.25f;
+          if (error_abs_mm > 200.0f) return 0.15f;
+          if (error_abs_mm > 80.0f)  return 0.08f;
+          return 0.04f;
+        }</code></pre>
+
+        <P>
+
+          The controller output is then limited and applied to the motors:
+        </P>
+
+        <pre><code class="language-cpp">float u_limit = control_get_dynamic_limit(fabs(error));
+          u = clamp(u, -u_limit, u_limit);
+          // stop band near the setpoint
+          if (fabs(error) < 10.0f) {
+            motors_stop();
+            g_pid.prev_error = error;
+            g_pid.prev_t_ms = now_ms;
+            return;
+          }
+          // send command to motors
+          if (g_motors_enabled) {
+            motors_set_normalized(-u);
+          } else {
+            motors_stop();
+          }</code></pre>
+
+          <P>
+            This section of the code performs three tasks. First, it limits the maximum control signal so the robot slows down as it approaches the wall. Second, it introduces a small stop band around the setpoint to prevent constant oscillations near the target distance. Finally, it converts the normalized control signal into motor commands.
+          </P>
 
 
     <div class="card">
 
-     <h4>2. Power supply and Oscilloscope </h4>
+     <h4>2. PID Discussion </h4>
 
         <p>
 
@@ -278,6 +372,18 @@
 But my robot was already wired with a battery connector before I saw the instruction. 
 So based on the lab instructions and other students’ setups, a reasonable configuration is to set the supply to approximately 3.7 V to match the nominal voltage of the 850 mAh Li-ion battery used later in the lab, with a current limit around 1–1.5 A. This current limit is high enough to allow the motors to start and run normally while still protecting the motor driver and wiring in case of a short or wiring mistake. Using a regulated supply also avoids voltage drops associated with partially discharged batteries and allows consistent testing conditions.
         </p>
+
+
+
+        <p>
+          <img class="img-small" src="0.001 P.png" alt="   ">
+          <img class="img-small" src="0.001 P1.png" alt="   ">
+          <img class="img-small" src="0.001 P2.png" alt="   ">
+
+      </p>
+
+
+
 
 
         <p>

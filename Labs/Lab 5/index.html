@@ -166,6 +166,9 @@
         <li><code>SET_SETPOINT</code> – set the target wall distance</li>
         <li><code>START_CONTROL / STOP_CONTROL</code> – start or stop the controller</li>
       </ul>
+      <p>
+        During each experiment, I start the controller from Python over BLE and let the robot run for a fixed amount of time while storing debugging data locally. After the run finishes, the robot stops and the logged data is sent back to the computer for plotting and analysis.
+      </p>
       </P>
 
       <p>
@@ -192,7 +195,17 @@ ble.send_command(CMD.ENABLE_MOTORS, "")
 ble.send_command(CMD.SET_PID_GAINS, f"{Kp}|{Ki}|{Kd}")
 ble.send_command(CMD.SET_SETPOINT, "304")
 ble.send_command(CMD.START_CONTROL, "")</code></pre>
+      <p>
+        This setup also allows me to update controller gains directly from Python, which makes PID tuning much faster because the Artemis does not need to be reflashed each time the gains change.
+      </p>
 
+      <p>
+        I also implemented a simple hard stop in the firmware so the robot stops if the controller is disabled or if motor output is not allowed. This prevents the robot from continuing to move unintentionally if the experiment ends or if communication stops.
+      </p>
+      <pre><code class="language-cpp">if (!g_motors_enabled || !g_control_enabled) {
+  motors_stop();
+  return;
+}</code></pre>
       <p>
         During each experiment, debugging data such as timestamps, raw ToF distance, estimated distance, and controller output are logged directly on the Artemis. Instead of transmitting this data over BLE during every control loop iteration, the values are stored locally in arrays and sent after the experiment finishes. This prevents BLE communication from slowing down the control loop.
       </p>
@@ -203,6 +216,9 @@ g_pid_log[g_pid_log_count].est_dist_mm = est_dist_mm;
 g_pid_log[g_pid_log_count].error = error;
 g_pid_log[g_pid_log_count].u = u;
 g_pid_log_count++;</code></pre>
+      <p>
+        Since the Artemis has limited onboard memory, I only store the data needed for each experiment run.
+      </p>
 
       <p>
         After the maneuver finishes, the stored log data is transmitted back to the computer over BLE, where Python receives the messages and converts them into arrays for plotting and analysis.
@@ -221,7 +237,7 @@ data.append(msg)</code></pre>
 
       <h4>1. Position Control setup </h4>
       <p>
-        With the BLE command interface and logging framework already set up in the pre-lab, I then implemented the wall-distance controller that allows the robot to approach and maintain a desired distance from a wall. The controller was implemented in control.hpp and uses feedback from the front Time-of-Flight sensor to continuously update the motor commands. For all of my experiments, I used a target distance of approximately 304 mm from the wall.
+        With the BLE command interface and logging framework already set up in the pre-lab, I then implemented the wall-distance controller that allows the robot to approach and maintain a desired distance from a wall. The controller was implemented in <code>control.hpp</code> and uses feedback from the front Time-of-Flight sensor to continuously update the motor commands. For all of my experiments, I used a target distance of approximately 304 mm from the wall.
       </p>
 
       <P>
@@ -229,12 +245,21 @@ data.append(msg)</code></pre>
       </P>
 
       <p>
-        Distance Measurement and Error Calculation
+        The controller runs continuously inside the main loop whenever control is enabled, so the motor commands are updated in real time using the latest distance estimate.
+      </p>
+
+      <p>
+        <strong>Distance Measurement and Error Calculation</strong>
       </p>
 
       <P>
         For the controller I only used the front ToF sensor. In my hardware setup this sensor is the XSHUT-controlled sensor, which is stored as g_tof2. I created a helper function that returns the most recent valid distance measurement:
       </P>
+
+      <pre><code class="language-cpp">static inline float control_get_raw_distance_mm() {
+  if (g_tof2_last.valid) return (float)g_tof2_last.d_mm;
+  return 0.0f;
+}</code></pre>
 
       <P>
         The controller then computes the wall-distance error using equation:
@@ -252,9 +277,9 @@ data.append(msg)</code></pre>
         If the robot is farther than the desired distance, the error becomes positive and the robot should drive forward. If the robot is too close to the wall, the error becomes negative and the robot should move backward.
       </P>
 
-      <P>
-        PID Controller Implementation
-      </P>
+      <p>
+        <strong>PID Controller Implementation</strong>
+      </p>
 
       <P>
         The robot motion is controlled using a PID controller equation:
@@ -287,9 +312,9 @@ data.append(msg)</code></pre>
           The time step dt is computed from the system clock. The integral term accumulates the error over time and is clamped to prevent integral windup. The derivative term estimates the rate of change of the error between successive control updates.
         </P>
 
-        <P>
-          Output Limiting and Motor Command
-        </P>
+        <p>
+          <strong>Output Limiting and Motor Command</strong>
+        </p>
 
         <P>
           During my first experiments the robot approached the wall too quickly and often overshot the desired distance. To improve this behavior, I implemented a distance-dependent output limiter so that the maximum control signal decreases as the robot gets closer to the target.
@@ -326,6 +351,12 @@ data.append(msg)</code></pre>
           <P>
             This section of the code performs three tasks. First, it limits the maximum control signal so the robot slows down as it approaches the wall. Second, it introduces a small stop band around the setpoint to prevent constant oscillations near the target distance. Finally, it converts the normalized control signal into motor commands.
           </P>
+          <p>
+            I used <code>-u</code> in the motor command because of the motor orientation on my robot, so a positive control output drives the robot toward the wall.
+          </p>
+
+
+      </div>
 
 
     <div class="card">
@@ -338,8 +369,7 @@ data.append(msg)</code></pre>
 
         <P>
 
-          I first tested the controller using only proportional control with gains K_p = 0.001, K_i = 0, and K_d = 0. As shown in the ToF vs time plot, the robot approaches the wall quickly and slows down as the error decreases. The motor input vs time plot shows the motor command decreasing as the robot gets closer to the setpoint. However, the robot stops around 240–250 mm instead of the target 304 mm. I think this error occurs because the proportional output becomes too small to overcome motor deadband when the error is small.
-
+          I first tested the controller using only proportional control with gains K_p = 0.001, K_i = 0, and K_d = 0. As shown in the ToF vs time plot, the robot approaches the wall quickly and slows down as the error decreases. However, the robot overshoots the target distance and settles too close to the wall, around 230–240 mm instead of the desired 304 mm. The motor input plot shows the controller applying a small corrective command after the overshoot, but the output becomes too small to move the robot back to the setpoint.
 
         </P>
 
@@ -361,8 +391,7 @@ data.append(msg)</code></pre>
 
         <P>
 
-
-          To reduce the steady-state error observed with proportional control, I added an integral term and tested a PI controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0. As shown in the plots, the robot approaches the wall and settles closer to the target distance compared to the proportional-only controller. The integral term accumulates the error over time, which increases the control signal and helps overcome motor deadband and friction.
+          To reduce the steady-state error observed with proportional control, I added an integral term and tested a PI controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0. As shown in the plots, the robot approaches the wall and settles closer to the target distance compared to the proportional-only controller. The integral term accumulates the error over time, which increases the control signal and helps overcome motor deadband and friction. The final distance is still slightly below the target, but the steady-state error is smaller than in the proportional-only case.
         </P>
 
 
@@ -385,7 +414,7 @@ data.append(msg)</code></pre>
 
 
       <P>
-        Finally, I tested a full PID controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0.00015. The derivative term helps predict how quickly the robot is approaching the wall and can reduce overshoot by slowing the robot as it nears the setpoint. As shown in the plots, the robot approaches the wall and settles near the target distance of approximately 304 mm. However, the PID terms plot shows that the derivative term produces large spikes due to noise in the ToF measurements, which also appears as fluctuations in the motor input. From this observation, a low-pass filter on the derivative term would likely improve stability by reducing the effect of sensor noise.
+        Finally, I tested a full PID controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0.00015. As shown in the plots, the robot approaches the wall and settles closest to the desired distance compared with the previous controllers. The derivative term helps slow the robot as it nears the setpoint, which reduces overshoot and improves the final accuracy. However, the PID terms plot shows that the derivative term produces large spikes due to noise in the ToF measurements, which also appears as fluctuations in the motor input. From this observation, a low-pass filter on the derivative term would likely improve stability by reducing the effect of sensor noise.
       </P>
 
       <p>

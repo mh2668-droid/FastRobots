@@ -128,127 +128,82 @@
 
     <div class="card">
       <h3>Pre Lab</h3>
+
       <p>
-        Before implementing the controller, I saw a organization approach by  Stephan W.(2024)  and reorganized my Arduino code to make debugging and testing easier. Instead of keeping everything inside a single .ino file, I separated the major parts of the system into different header files. This made it much easier to modify individual components without scrolling through a long block of code.
+        Before implementing the controller, I reorganized my firmware using a modular structure similar to the approach shown by Stephan W. Instead of keeping all functionality inside a single <code>.ino</code> file, each major subsystem was moved into its own header file. This makes the code easier to read, debug, and modify during controller tuning.
       </p>
 
-    
-      <p>
-        The code was divided into the following modules:
+      <p>The firmware was divided into the following modules:</p>
 
-      </p>
       <ul>
-        <li><code>ble.hpp</code> - handles Bluetooth communication and command parsing</li>
-        <li><code>tof.hpp</code> - manages the two ToF sensors and distance measurements</li>
-        <li><code>motors.hpp</code> - converts motor commands into PWM signals</li>
-        <li><code>imu.hpp</code> - processes IMU sensor data</li>
-        <li><code>control.hpp</code> - implements the P, PI, and PID control logic</li>
-        <li><code>cmd_types.h</code> - defines the command types used for BLE communication</li>
-        <li><code>flags.h</code> - stores system state flags used across different modules</li>
-      </ul>
-
-    </p>
-      With this structure, the main ble_arduino.ino file only contains the standard Arduino setup() and loop() functions. All of the system logic is handled inside the modules.
-    <p>
-      <p>
-
-        For debugging and control, I implemented several BLE commands that allow the Python interface to control the robot. These commands allow me to start or stop the controller, enable the motors, start ToF ranging, and update controller parameters. For example, I implemented commands such as:
-        
-        
-      </p>
-      <ul>
-        <li><code>ENABLE_MOTORS</code> - allows motor PWM commands to be sent</li>
-        <li><code>DISABLE_MOTORS</code> - immediately stops the motors</li>
-        <li><code>START_TOF / STOP_TOF</code> - start or stop ToF sensor ranging</li>
-        <li><code>SET_PID_GAINS</code> - update the controller gains from Python</li>
-        <li><code>SET_SETPOINT</code> - set the target distance from the wall</li>
-        <li><code>START_CONTROL / STOP_CONTROL</code> - start or stop the controller</li>
+        <li><code>ble.hpp</code> – handles BLE communication and command parsing</li>
+        <li><code>tof.hpp</code> – manages the two ToF sensors and distance measurements</li>
+        <li><code>motors.hpp</code> – converts motor commands into PWM signals</li>
+        <li><code>imu.hpp</code> – processes IMU sensor data</li>
+        <li><code>control.hpp</code> – implements the P, PI, and PID control logic</li>
+        <li><code>cmd_types.h</code> – defines the command types used for BLE communication</li>
+        <li><code>flags.h</code> – stores system state flags shared across modules</li>
       </ul>
 
       <p>
+        With this structure, the main <code>ble_arduino.ino</code> file only contains the Arduino <code>setup()</code> and <code>loop()</code> functions, while the system logic is handled inside the modules. This greatly simplifies debugging and allows individual components to be updated without searching through a large file.
+      </p>
 
+      <p>
+        For debugging and experimentation, I implemented several BLE commands that allow the Python interface to control the robot during runtime. These commands allow the computer to start or stop the controller, enable the motors, start ToF ranging, and update controller parameters.
+      </p>
+
+      <ul>
+        <li><code>ENABLE_MOTORS</code> – allows motor PWM commands to be sent</li>
+        <li><code>DISABLE_MOTORS</code> – immediately stops the motors</li>
+        <li><code>START_TOF / STOP_TOF</code> – start or stop ToF sensor ranging</li>
+        <li><code>SET_PID_GAINS</code> – update controller gains from Python</li>
+        <li><code>SET_SETPOINT</code> – set the target wall distance</li>
+        <li><code>START_CONTROL / STOP_CONTROL</code> – start or stop the controller</li>
+      </ul>
+
+      <p>
         On the Arduino side, incoming BLE messages are parsed and executed using a command handler. For example, the PID gains can be updated directly from Python using the following command handler:
       </p>
 
-
       <pre><code class="language-cpp">case SET_PID_GAINS: {
-        float kp, ki, kd;
-    
-        g_robot_cmd.get_next_value(kp);
-        g_robot_cmd.get_next_value(ki);
-        g_robot_cmd.get_next_value(kd);
-    
-        control_set_gains(kp, ki, kd);
-        break;
-    }</code></pre>
+  float kp, ki, kd;
 
-      <P>
-        On the Python side, the commands are sent using a helper interface that formats the command and transmits it over BLE. 
-        This allows me to modifiy the controller parameters and robot behavior during runtime.
-      </P>
+  g_robot_cmd.get_next_value(kp);
+  g_robot_cmd.get_next_value(ki);
+  g_robot_cmd.get_next_value(kd);
 
-      
+  control_set_gains(kp, ki, kd);
+  break;
+}</code></pre>
+
+      <p>
+        On the Python side, commands are sent through a helper interface that formats and transmits messages over BLE. This allows controller gains and other parameters to be adjusted quickly without reflashing the Artemis.
+      </p>
 
       <pre><code class="language-python">ble.send_command(CMD.START_TOF, "")
-        ble.send_command(CMD.ENABLE_MOTORS, "")
-        ble.send_command(CMD.SET_PID_GAINS, f"{Kp}|{Ki}|{Kd}")
-        ble.send_command(CMD.SET_SETPOINT, "304")
-        ble.send_command(CMD.START_CONTROL, "")</code></pre>
+ble.send_command(CMD.ENABLE_MOTORS, "")
+ble.send_command(CMD.SET_PID_GAINS, f"{Kp}|{Ki}|{Kd}")
+ble.send_command(CMD.SET_SETPOINT, "304")
+ble.send_command(CMD.START_CONTROL, "")</code></pre>
 
-        <P>
+      <p>
+        During each experiment, debugging data such as timestamps, raw ToF distance, estimated distance, and controller output are logged directly on the Artemis. Instead of transmitting this data over BLE during every control loop iteration, the values are stored locally in arrays and sent after the experiment finishes. This prevents BLE communication from slowing down the control loop.
+      </p>
 
-          During each experiment, I log debugging data such as timestamps, raw ToF distance measurements, estimated distance, and the controller output directly on the Artemis while the controller is running. Instead of continuously sending this data over BLE, I first store the values locally in arrays. I chose this approach because sending data over BLE during every control loop iteration could slow down the controller and affect the robot’s behavior. By logging the data locally, the control loop can run smoothly while still recording the full system response for later analysis.
+      <pre><code class="language-cpp">g_pid_log[g_pid_log_count].t_ms = t_ms;
+g_pid_log[g_pid_log_count].raw_dist_mm = raw_dist_mm;
+g_pid_log[g_pid_log_count].est_dist_mm = est_dist_mm;
+g_pid_log[g_pid_log_count].error = error;
+g_pid_log[g_pid_log_count].u = u;
+g_pid_log_count++;</code></pre>
 
-        </P>
+      <p>
+        After the maneuver finishes, the stored log data is transmitted back to the computer over BLE, where Python receives the messages and converts them into arrays for plotting and analysis.
+      </p>
 
-        <p>
-          Example of logging controller data on the Artemis:
-        </p>
-
-        <pre><code class="language-cpp">g_pid_log[g_pid_log_count].t_ms = t_ms;
-          g_pid_log[g_pid_log_count].raw_dist_mm = raw_dist_mm;
-          g_pid_log[g_pid_log_count].est_dist_mm = est_dist_mm;
-          g_pid_log[g_pid_log_count].error = error;
-          g_pid_log[g_pid_log_count].u = u;
-          g_pid_log_count++;</code></pre>
-
-        <p>
-
-          After the maneuver finishes, I send the stored log data back to the computer over BLE. Each data point is formatted into a message and transmitted through the BLE characteristic so that the Python script can receive it.
-        </p>
-
-
-
-        <P>
-
-          Example of sending logged data over BLE:
-        </P>
-
-
-        <pre><code class="language-cpp">EString msg;
-          msg.clear();
-          msg.append(t_ms);
-          msg.append("|");
-          msg.append(raw_dist_mm);
-          msg.append("|");
-          msg.append(u);
-          
-          g_tx_characteristic.writeValue(msg.c_str());</code></pre>
-
-        <p>
-
-          On the Python side, I receive these messages through the BLE interface and store them in arrays. I then use this data to generate plots such as distance versus time in order to analyze the behavior of the controller.
-        </p>
-
-        <p>
-          Example of receiving data in Python:
-        </p>
-
-        <pre><code class="language-python">msg = ble.receive_string(ble.uuid["RX_STRING"])
-          data.append(msg)</code></pre>
-
-
-
+      <pre><code class="language-python">msg = ble.receive_string(ble.uuid["RX_STRING"])
+data.append(msg)</code></pre>
     </div>
 
 
@@ -276,10 +231,10 @@
       </P>
 
       <P>
-        The controller then computes the wall-distance error using
+        The controller then computes the wall-distance error using equation:
       </P>
 
-      <p>Equation:</p>
+      
       <p>\[
         e(t) = \text{setpoint} - \text{distance}
       \]</p>
@@ -296,10 +251,9 @@
       </P>
 
       <P>
-        The robot motion is controlled using a PID controller
+        The robot motion is controlled using a PID controller equation:
       </P>
 
-      <p>Equation:</p>
       <p>\[
         u(t) = K_p e(t) + K_i \int e(t)\,dt + K_d \frac{de(t)}{dt}
       \]</p>
@@ -472,7 +426,7 @@
           To address this issue, I implemented a simple linear extrapolation algorithm to estimate the robot’s current distance between ToF updates. Every time a new ToF reading is received, I store the last two measurements along with their timestamps. These values are used to estimate the slope of the distance change:
         </P>
 
-        <p>Equation:</p>
+ 
         <p>\[
           m = \frac{d_2 - d_1}{t_2 - t_1}
         \]</p>
@@ -481,7 +435,7 @@
           Then, if the controller runs before a new sensor measurement arrives, the current distance is estimated using the elapsed time since the last sample:
         </P>
 
-        <p>Equation:</p>
+ 
         <p>\[
           d_{est} = d_2 + m (t - t_2)
         \]</p>

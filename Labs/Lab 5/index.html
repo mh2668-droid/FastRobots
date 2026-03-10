@@ -153,7 +153,7 @@
       </p>
 
       <p>
-        For debugging and experimentation, I implemented several BLE commands that allow the Python interface to control the robot during runtime. These commands allow the computer to start or stop the controller, enable the motors, start ToF ranging, and update controller parameters.
+        For debugging and experimentation, I implemented several BLE commands that allow the Python interface to control the robot during runtime. 
       </p>
 
       <P>
@@ -200,7 +200,7 @@ ble.send_command(CMD.START_CONTROL, "")</code></pre>
 
 
       <p>
-        I also implemented a simple hard stop in the firmware so the robot stops if the controller is disabled or if motor output is not allowed. This prevents the robot from continuing to move unintentionally if the experiment ends or if communication stops.
+        I also implemented a simple hard stop in the firmware so the robot stops if the controller is disabled or if motor output is not allowed. This prevents the robot from continuing to move if the experiment ends or if communication stops.
       </p>
       <pre><code class="language-cpp">if (!g_motors_enabled || !g_control_enabled) {
   motors_stop();
@@ -440,7 +440,7 @@ data.append(msg)</code></pre>
     <h4>3. Extrapolation</h4>
 
         <p>
-          At first, the PID controller was limited by the update rate of the ToF sensor because the controller could only react when a new distance measurement became available. To improve this, I decoupled the control loop from the sensor update rate so that the PID controller runs every loop iteration, even if the ToF sensor has not produced a new reading yet. In my implementation, the ToF sensor only updates the stored distance value when new data is ready, while the controller continues running using the most recent distance estimate.
+          At first, the PID controller was limited by the update rate of the ToF sensor because the controller could only react when a new distance measurement became available. To improve this, I decoupled the control loop from the sensor update rate so that the PID controller runs every loop iteration, even if the ToF sensor has not produced a new reading yet.
         </p>
 
         <P>

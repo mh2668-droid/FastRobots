@@ -364,60 +364,73 @@
 
     <div class="card">
 
-     <h4>2. PID Discussion </h4>
+     <h4>2. PID</h4>
 
         <p>
-
-          The lab manual recommends using a bench power supply during initial testing because it provides a stable voltage and adjustable current limit, which makes debugging safer and easier. 
-But my robot was already wired with a battery connector before I saw the instruction. 
-So based on the lab instructions and other students’ setups, a reasonable configuration is to set the supply to approximately 3.7 V to match the nominal voltage of the 850 mAh Li-ion battery used later in the lab, with a current limit around 1–1.5 A. This current limit is high enough to allow the motors to start and run normally while still protecting the motor driver and wiring in case of a short or wiring mistake. Using a regulated supply also avoids voltage drops associated with partially discharged batteries and allows consistent testing conditions.
+          P
         </p>
 
+        <P>
 
+          I first tested the controller using only proportional control with gains K_p = 0.001, K_i = 0, and K_d = 0. As shown in the ToF vs time plot, the robot approaches the wall quickly and slows down as the error decreases. The motor input vs time plot shows the motor command decreasing as the robot gets closer to the setpoint. However, the robot stops around 240–250 mm instead of the target 304 mm. I think this error occurs because the proportional output becomes too small to overcome motor deadband when the error is small.
+
+
+        </P>
 
         <p>
-          <img class="img-small" src="0.001 P.png" alt="   ">
-          <img class="img-small" src="0.001 P1.png" alt="   ">
           <img class="img-small" src="0.001 P2.png" alt="   ">
-
+          <img class="img-small" src="0.001 P1.png" alt="   ">
+          <img class="img-small" src="0.001 P.png" alt="   ">
       </p>
 
-
-
-
-
-        <p>
-
-          To verify that PWM was regulating the power delivered to the motor driver, I used analogWrite() to drive the motor driver input while observing the output with an oscilloscope. The probe tip was connected to the motor driver output node and the ground clip was connected to system ground. The following code was used to generate a constant PWM signal. 
-
-        </p>
-
-        <pre><code class="language-cpp">#define IN1 3
-          void setup() {
-            pinMode(IN1, OUTPUT);
-          }
-          void loop() {
-            analogWrite(IN1, 50);
-            delay(2000);
-          }</code></pre>
-
-        <p>
-            <img class="img-small" src="o.png" alt="   ">
-        </p>
-
-
-        <p>
-          The oscilloscope waveform picture shows a repeating switching pattern between low and higher voltage levels, The pulse width corresponds to the duty cycle set by the analogWrite() command. 
-
-But Because the robot had already been fully assembled and soldered before testing, the waveform contains noticeable electrical noise and voltage spikes from the environment and exposed wires. 
-Below is the video showing the regulation. 
-
-          
-        </p>
-
         <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/RzV6ZvypFnY" allowfullscreen></iframe>
+          <iframe src="https://www.youtube.com/embed/mG42YU0lPXs" allowfullscreen></iframe>
         </div>
+
+
+        <P>
+
+          PI
+        </P>
+
+        <P>
+
+
+          To reduce the steady-state error observed with proportional control, I added an integral term and tested a PI controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0. As shown in the plots, the robot approaches the wall and settles closer to the target distance compared to the proportional-only controller. The integral term accumulates the error over time, which increases the control signal and helps overcome motor deadband and friction.
+        </P>
+
+
+        <p>
+          <img class="img-small" src="0.001|0.00015|2.png" alt="   ">
+          <img class="img-small" src="0.001|0.00015|0 1.png" alt="   ">
+          <img class="img-small" src="0.001|0.00015|0.png" alt="   ">
+      </p>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/td54BleCAIU" allowfullscreen></iframe>
+      </div>
+
+
+      <P>
+
+        PID
+
+      </P>
+
+
+      <P>
+        Finally, I tested a full PID controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0.00015. The derivative term helps predict how quickly the robot is approaching the wall and can reduce overshoot by slowing the robot as it nears the setpoint. As shown in the plots, the robot approaches the wall and settles near the target distance of approximately 304 mm. However, the PID terms plot shows that the derivative term produces large spikes due to noise in the ToF measurements, which also appears as fluctuations in the motor input. From this observation, a low-pass filter on the derivative term would likely improve stability by reducing the effect of sensor noise.
+      </P>
+
+      <p>
+        <img class="img-small" src="1.png" alt="   ">
+        <img class="img-small" src="2.png" alt="   ">
+        <img class="img-small" src="3.png" alt="   ">
+    </p>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/PMJ7tQJ70gg" allowfullscreen></iframe>
+      </div>
 
 
     </div>
@@ -425,7 +438,7 @@ Below is the video showing the regulation.
 
     <div class="card">
 
-    <h4>3. Spining the wheels</h4>
+    <h4>3. </h4>
 
         <p>
 

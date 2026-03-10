@@ -137,19 +137,15 @@
         The code was divided into the following modules:
 
       </p>
-      <p>
-
-
-        <code class="language-cpp">	•	ble.hpp – handles Bluetooth communication and command parsing
-          •	tof.hpp – manages the two ToF sensors and distance measurements
-          •	motors.hpp – converts motor commands into PWM signals
-          •	imu.hpp – processes IMU sensor data
-          •	control.hpp – implements the P, PI, and PID control logic
-          •	cmd_types.h – defines the command types used for BLE communication
-          •	flags.h – stores system state flags used across different modules</code>
-
-
-      </p>
+      <ul>
+        <li><code>ble.hpp</code> - handles Bluetooth communication and command parsing</li>
+        <li><code>tof.hpp</code> - manages the two ToF sensors and distance measurements</li>
+        <li><code>motors.hpp</code> - converts motor commands into PWM signals</li>
+        <li><code>imu.hpp</code> - processes IMU sensor data</li>
+        <li><code>control.hpp</code> - implements the P, PI, and PID control logic</li>
+        <li><code>cmd_types.h</code> - defines the command types used for BLE communication</li>
+        <li><code>flags.h</code> - stores system state flags used across different modules</li>
+      </ul>
 
     </p>
       With this structure, the main ble_arduino.ino file only contains the standard Arduino setup() and loop() functions. All of the system logic is handled inside the modules.
@@ -160,14 +156,14 @@
         
         
       </p>
-      <p>
-        <code class="language-cpp">•	ENABLE_MOTORS – allows motor PWM commands to be sent
-        •	DISABLE_MOTORS – immediately stops the motors
-        •	START_TOF / STOP_TOF – start or stop ToF sensor ranging
-        •	SET_PID_GAINS – update the controller gains from Python
-        •	SET_SETPOINT – set the target distance from the wall
-        •	START_CONTROL / STOP_CONTROL – start or stop the controller</code>
-      </p>
+      <ul>
+        <li><code>ENABLE_MOTORS</code> - allows motor PWM commands to be sent</li>
+        <li><code>DISABLE_MOTORS</code> - immediately stops the motors</li>
+        <li><code>START_TOF / STOP_TOF</code> - start or stop ToF sensor ranging</li>
+        <li><code>SET_PID_GAINS</code> - update the controller gains from Python</li>
+        <li><code>SET_SETPOINT</code> - set the target distance from the wall</li>
+        <li><code>START_CONTROL / STOP_CONTROL</code> - start or stop the controller</li>
+      </ul>
 
       <p>
 

@@ -135,6 +135,8 @@
 
       <p>The firmware was divided into the following modules:</p>
 
+
+      <P>
       <ul>
         <li><code>ble.hpp</code> – handles BLE communication and command parsing</li>
         <li><code>tof.hpp</code> – manages the two ToF sensors and distance measurements</li>
@@ -144,6 +146,7 @@
         <li><code>cmd_types.h</code> – defines the command types used for BLE communication</li>
         <li><code>flags.h</code> – stores system state flags shared across modules</li>
       </ul>
+    </P>
 
       <p>
         With this structure, the main <code>ble_arduino.ino</code> file only contains the Arduino <code>setup()</code> and <code>loop()</code> functions, while the system logic is handled inside the modules. This greatly simplifies debugging and allows individual components to be updated without searching through a large file.
@@ -153,6 +156,8 @@
         For debugging and experimentation, I implemented several BLE commands that allow the Python interface to control the robot during runtime. These commands allow the computer to start or stop the controller, enable the motors, start ToF ranging, and update controller parameters.
       </p>
 
+      <P>
+
       <ul>
         <li><code>ENABLE_MOTORS</code> – allows motor PWM commands to be sent</li>
         <li><code>DISABLE_MOTORS</code> – immediately stops the motors</li>
@@ -161,6 +166,7 @@
         <li><code>SET_SETPOINT</code> – set the target wall distance</li>
         <li><code>START_CONTROL / STOP_CONTROL</code> – start or stop the controller</li>
       </ul>
+      </P>
 
       <p>
         On the Arduino side, incoming BLE messages are parsed and executed using a command handler. For example, the PID gains can be updated directly from Python using the following command handler:

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 5 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <!-- MathJax for LaTeX equations -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .img-small {
+      max-width: 360px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .img-medium {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 5: Linear PID control and Linear interpolation</h1>
+   
+    <div class="card">
+      <h3>Objective</h3>
+      <p>
+        The goal of this lab is to implement a closed-loop controller that allows the robot to maintain a desired distance from a wall using Time-of-Flight sensor measurements. By implementing and testing P, PI, and PID control, 
+        the system adjusts motor speeds in real time to reduce distance error and achieve stable wall-distance regulation.
+        
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Pre Lab</h3>
+      <p>
+        Before implementing the controller, I saw a organization approach by  Stephan W.(2024)  and reorganized my Arduino code to make debugging and testing easier. Instead of keeping everything inside a single .ino file, I separated the major parts of the system into different header files. This made it much easier to modify individual components without scrolling through a long block of code.
+      </p>
+
+    
+      <p>
+        The code was divided into the following modules:
+	•	ble.hpp – handles Bluetooth communication and command parsing
+	•	tof.hpp – manages the two ToF sensors and distance measurements
+	•	motors.hpp – converts motor commands into PWM signals
+	•	imu.hpp – processes IMU sensor data
+	•	control.hpp – implements the P, PI, and PID control logic
+	•	cmd_types.h – defines the command types used for BLE communication
+	•	flags.h – stores system state flags used across different modules
+
+      </p>
+
+    </p>
+      With this structure, the main ble_arduino.ino file only contains the standard Arduino setup() and loop() functions. All of the system logic is handled inside the modules.
+    <p>
+      <p>
+
+        For debugging and control, I implemented several BLE commands that allow the Python interface to control the robot. These commands allow me to start or stop the controller, enable the motors, start ToF ranging, and update controller parameters. For example, I implemented commands such as:
+        •	ENABLE_MOTORS – allows motor PWM commands to be sent
+        •	DISABLE_MOTORS – immediately stops the motors
+        •	START_TOF / STOP_TOF – start or stop ToF sensor ranging
+        •	SET_PID_GAINS – update the controller gains from Python
+        •	SET_SETPOINT – set the target distance from the wall
+        •	START_CONTROL / STOP_CONTROL – start or stop the controller
+      </p>
+
+      <p>
+
+        On the Arduino side, incoming BLE messages are parsed and executed using a command handler. For example, the PID gains can be updated directly from Python using the following command handler:
+      </p>
+
+
+      <pre><code class="language-cpp">case SET_PID_GAINS: {
+        float kp, ki, kd;
+    
+        g_robot_cmd.get_next_value(kp);
+        g_robot_cmd.get_next_value(ki);
+        g_robot_cmd.get_next_value(kd);
+    
+        control_set_gains(kp, ki, kd);
+        break;
+    }</code></pre>
+
+      <P>
+        On the Python side, the commands are sent using a helper interface that formats the command and transmits it over BLE. 
+        This allows me to modifiy the controller parameters and robot behavior during runtime.
+      </P>
+
+      
+
+      <pre><code class="language-python">ble.send_command(CMD.SET_PID_GAINS, f"{Kp}|{Ki}|{Kd}")
+        ble.send_command(CMD.SET_SETPOINT, "300")
+        ble.send_command(CMD.START_CONTROL, "")</code></pre>
+
+
+        <P>
+
+
+          
+        </P>
+
+
+
+
+
+
+    </div>
+
+
+    <div class="card">
+      <h3>Tasks</h3>
+
+      <div class="card">
+
+
+      <h4>1. Disassembly</h4>
+      <p>
+        I first took the car apart and cut out the factory PCB, below is an after picture with no hardware installed. 
+      </p>
+
+      </p>
+      <img class="img-small" src="E.png" alt="">
+      
+     </div>
+
+
+
+    <div class="card">
+
+     <h4>2. Power supply and Oscilloscope </h4>
+
+        <p>
+
+          The lab manual recommends using a bench power supply during initial testing because it provides a stable voltage and adjustable current limit, which makes debugging safer and easier. 
+But my robot was already wired with a battery connector before I saw the instruction. 
+So based on the lab instructions and other students’ setups, a reasonable configuration is to set the supply to approximately 3.7 V to match the nominal voltage of the 850 mAh Li-ion battery used later in the lab, with a current limit around 1–1.5 A. This current limit is high enough to allow the motors to start and run normally while still protecting the motor driver and wiring in case of a short or wiring mistake. Using a regulated supply also avoids voltage drops associated with partially discharged batteries and allows consistent testing conditions.
+        </p>
+
+
+        <p>
+
+          To verify that PWM was regulating the power delivered to the motor driver, I used analogWrite() to drive the motor driver input while observing the output with an oscilloscope. The probe tip was connected to the motor driver output node and the ground clip was connected to system ground. The following code was used to generate a constant PWM signal. 
+
+        </p>
+
+        <pre><code class="language-cpp">#define IN1 3
+          void setup() {
+            pinMode(IN1, OUTPUT);
+          }
+          void loop() {
+            analogWrite(IN1, 50);
+            delay(2000);
+          }</code></pre>
+
+        <p>
+            <img class="img-small" src="o.png" alt="   ">
+        </p>
+
+
+        <p>
+          The oscilloscope waveform picture shows a repeating switching pattern between low and higher voltage levels, The pulse width corresponds to the duty cycle set by the analogWrite() command. 
+
+But Because the robot had already been fully assembled and soldered before testing, the waveform contains noticeable electrical noise and voltage spikes from the environment and exposed wires. 
+Below is the video showing the regulation. 
+
+          
+        </p>
+
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/RzV6ZvypFnY" allowfullscreen></iframe>
+        </div>
+
+
+    </div>
+
+
+    <div class="card">
+
+    <h4>3. Spining the wheels</h4>
+
+        <p>
+
+          First, To verify that the motor driver and wiring were functioning correctly, the robot was placed on its side so the wheels could spin freely forward and backward. The motor driver was powered using an external power supply as we discussed earlier, and all grounds were connected.  
+             
+        </p>
+        <pre><code class="language-cpp">#define MOTOR_A_FWD 3   
+          #define MOTOR_A_BWD 4   
+          int speedVal = 50;      
+          void setup() {
+              pinMode(MOTOR_A_FWD, OUTPUT);
+              pinMode(MOTOR_A_BWD, OUTPUT);
+          }
+          void loop() {
+              // FORWARD
+              analogWrite(MOTOR_A_FWD, speedVal);
+              analogWrite(MOTOR_A_BWD, 0);
+              delay(3000);
+              // REVERSE
+              analogWrite(MOTOR_A_FWD, 0);
+              analogWrite(MOTOR_A_BWD, speedVal);
+              delay(3000);
+          }</code></pre>
+
+
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/bUil_DzBMAc" allowfullscreen></iframe>
+        </div>
+
+
+        <p>
+          After verifying a single motor, both motor drivers were connected and tested together to confirm that the robot could drive both wheels in the same direction and reverse them simultaneously. 
+
+          The following code was used to run both motors forward and backward:
+        </p>
+
+        <pre><code class="language-cpp">// Motor A (left)
+          #define MOTOR_A_FWD 3
+          #define MOTOR_A_BWD 4
+          // Motor B (right)
+          #define MOTOR_B_FWD 1
+          #define MOTOR_B_BWD 0
+          int speedVal = 80;   
+
+          void setup() {
+            pinMode(MOTOR_A_FWD, OUTPUT);
+            pinMode(MOTOR_A_BWD, OUTPUT);
+            pinMode(MOTOR_B_FWD, OUTPUT);
+            pinMode(MOTOR_B_BWD, OUTPUT);
+          }
+          void loop() {
+            // FORWARD
+            analogWrite(MOTOR_A_FWD, speedVal);
+            analogWrite(MOTOR_A_BWD, 0);
+            analogWrite(MOTOR_B_FWD, speedVal);
+            analogWrite(MOTOR_B_BWD, 0);
+            delay(3000);
+            // REVERSE
+            analogWrite(MOTOR_A_FWD, 0);
+            analogWrite(MOTOR_A_BWD, speedVal);
+            analogWrite(MOTOR_B_FWD, 0);
+            analogWrite(MOTOR_B_BWD, speedVal);
+            delay(3000);
+          }</code></pre>
+
+          <p>
+
+            When running both motors together, the video also shows that the two wheels do not spin at the exact same rate. This is expected due to small differences in motors, gearboxes, and friction, and it causes the car to drift when driving on the ground. In a later section, I show how I addressed this by adding a calibration factor to better match the two motor speeds.
+          </p>
+
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/iV--AUkRDEg" allowfullscreen></iframe>
+        </div>
+    </div>
+
+
+
+
+
+    <div class="card">
+
+        <h4>4. Final Component Setup </h4>
+
+
+
+
+        <p>
+          <img class="img-small" src="F.png" alt="   ">
+      </p>
+
+        <p>
+
+          The picture above shows the fully assembled robot with all components secured inside the chassis.
+           The Artemis board, dual motor drivers, motor driver battery, ToF sensors, and IMU are mounted firmly to prevent movement during operation. 
+           The Artemis battery is placed at the bottom of the original chassis battery room for better storage. 
+            Wires are routed compactly to reduce clutter and avoid interference with moving parts.
+        </p>
+
+       
+    </div>
+
+
+
+    <div class="card">
+
+        <h4>5. BLE control setup </h4>
+
+        <p>
+
+          To control the car in open-loop, I programmed the Artemis to receive BLE commands from my laptop. On the Arduino side, the firmware listens for a DRIVE command that contains two signed PWM values formatted as left and right. The code parses the two values, clamps them to the valid range (−255 to 255), and then drives each motor using analogWrite on the H-bridge inputs (positive PWM drives forward, negative drives backward). A STOP command sets all motor PWM outputs to zero. On the Python side, I used helper functions to send DRIVE and STOP over BLE, and I ran timed motions by calling drive_for(left_pwm, right_pwm, duration_s) (for example, drive_for(80, 115, 2) to drive forward for 2 seconds with different left and right PWM values for calibration).
+
+        </p>
+
+
+        <pre><code class="language-cpp">// Arduino snippet (BLE parsing + motor output)
+          case DRIVE: {
+            int leftPWM, rightPWM;
+            robot_cmd.get_next_value(leftPWM);
+            robot_cmd.get_next_value(rightPWM);
+            setBothPWM(leftPWM, rightPWM);   // uses analogWrite to drive motors
+            txNotify("OK");
+            break;
+          }
+          
+          case STOP:
+            stopBoth();                      // sets all analogWrite outputs to 0
+            txNotify("STOPPED");
+            break;</code></pre>
+
+
+            <pre><code class="language-python"># Python snippet (sending DRIVE/STOP)
+          def stop():
+              try:
+                  ble.send_command(CMD.STOP, "")
+              except Exception as e:
+                  print("STOP failed (disconnected):", e)
+          
+          def drive(left_pwm: int, right_pwm: int):
+              left_pwm  = max(-255, min(255, int(left_pwm)))
+              right_pwm = max(-255, min(255, int(right_pwm)))
+              ble.send_command(CMD.DRIVE, f"{left_pwm}|{right_pwm}")
+          
+          def drive_for(left_pwm, right_pwm, duration_s):
+              drive(left_pwm, right_pwm)
+              time.sleep(duration_s)
+              stop()</code></pre>
+
+
+    </div>
+
+    <div class="card">
+
+        <h4>6. Lower Limit PWM and Calibration </h4>
+        <P>
+
+          After setting up BLE drive control, I tested the minimum PWM values required for the robot to move on the ground. I observed that the robot needs more power to start moving from rest due to static friction. The lowest values that consistently produced forward motion were approximately (15, 50) for the left and right motors. Below this range, one of the wheels would stall. I also tested higher values and found that the robot could still move straight around (200, 255). A stable mid-range value for straight driving was (80, 115).
+        </P>
+
+        <P>
+          From these tests, it was clear that the two motors do not spin at the same rate for the same PWM input. To compensate for this mismatch, I introduced a calibration factor based on the tested data. Using the mid-range straight-driving values (80, 115), the ratio between the motors is approximately 0.70. I then applied this scaling so that for a given base PWM value p, the left motor receives 0.70p while the right motor receives p. This allows the robot to maintain a fairly straight path across different speeds.
+        </P>
+
+
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/UlocZ1UlDHs" allowfullscreen></iframe>
+        </div>
+
+        <p>
+          The video above shows the robot following a straight tape line for at least 2 meters. 
+          The robot started a little off centered following the line on the ground but still remains mostly straight at the end,
+        </p>
+    </div>
+
+    <div class="card">
+
+      <h4>7. Open loop Control and Additional Discussion</h4>
+      <P>
+        To demonstrate open-loop, I programmed the robot to execute a timed sequence of movements using BLE commands. The robot drove forward for 2 seconds and then performed an in-place turn for 1 second using preset PWM values. Since the motion was based only on fixed timing and motor commands without any feedback correction, this demonstrates open-loop control. A video below shows the robot completing the sequence successfully.
+        
+      </P>
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/AwfEgoBP-LI" allowfullscreen></iframe>
+      </div>
+
+      <p>
+        The video above shows the robot following a straight tape line for at least 2 meters. 
+        The robot started a little off centered following the line on the ground but still remains mostly straight at the end,
+      </p>
+
+      <p>
+
+        Using the oscilloscope measurement function, I estimated the PWM frequency generated by analogWrite() to be approximately 267 Hz. This frequency is sufficient for controlling our DC gear motors because the motor’s mechanical inertia smooths the voltage pulses and speed is primarily determined by duty cycle. Increasing the PWM frequency could reduce audible noise and torque ripple, but the default frequency was adequate for stable operation in this lab.
+      </p>
+
+      <p>
+        Through experimental testing, I determined that the robot requires a higher PWM value to start moving than to remain in motion due to static friction. After the robot was already moving, I gradually reduced the PWM and found that the lowest values that could sustain continuous forward motion were approximately 6 for the left motor and 20 for the right motor. Below these values, one or both wheels would stall.
+      </p>
+  </div>
+   
+
+
+
+
+    <div class="footer">
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+    </div>
+  </div>
+</body>
+</html>

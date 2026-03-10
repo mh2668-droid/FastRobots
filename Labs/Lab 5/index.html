@@ -279,7 +279,10 @@
         The controller then computes the wall-distance error using
       </P>
 
-      Equations:e(t) = \text{setpoint} - \text{distance}
+      <p>Equation:</p>
+      <p>\[
+        e(t) = \text{setpoint} - \text{distance}
+      \]</p>
 
       <pre><code class="language-cpp">const float error = g_pid.setpoint_mm - dist_mm;</code></pre>
 
@@ -296,7 +299,10 @@
         The robot motion is controlled using a PID controller
       </P>
 
-      equations:u(t) = K_p e(t) + K_i \int e(t) dt + K_d \frac{de(t)}{dt}
+      <p>Equation:</p>
+      <p>\[
+        u(t) = K_p e(t) + K_i \int e(t)\,dt + K_d \frac{de(t)}{dt}
+      \]</p>
 
       <P>
         In my implementation the PID controller is computed in discrete time using the following code:
@@ -466,13 +472,19 @@
           To address this issue, I implemented a simple linear extrapolation algorithm to estimate the robot’s current distance between ToF updates. Every time a new ToF reading is received, I store the last two measurements along with their timestamps. These values are used to estimate the slope of the distance change:
         </P>
 
-        equation:m = \frac{d_2 - d_1}{t_2 - t_1}
+        <p>Equation:</p>
+        <p>\[
+          m = \frac{d_2 - d_1}{t_2 - t_1}
+        \]</p>
 
         <P>
           Then, if the controller runs before a new sensor measurement arrives, the current distance is estimated using the elapsed time since the last sample:
         </P>
 
-        equations:d_{est} = d_2 + m (t - t_2)
+        <p>Equation:</p>
+        <p>\[
+          d_{est} = d_2 + m (t - t_2)
+        \]</p>
 
         <P>
           In my controller implementation, both the raw distance and the extrapolated distance are available, but the extrapolated value is used for the control calculation because it better represents the robot’s current position.

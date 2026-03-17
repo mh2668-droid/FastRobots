@@ -202,316 +202,77 @@ Although a derivative term with low-pass filtering exists in the code framework,
       <div class="card">
 
 
-      <h4>1. PI</h4>
+      <h4>1. PI Controller, Implementation, and Results</h4>
       <p>
-        With the BLE command interface and logging framework already set up in the pre-lab, I then implemented the wall-distance controller that allows the robot to approach and maintain a desired distance from a wall. The controller was implemented in <code>control.hpp</code> and uses feedback from the front Time-of-Flight sensor to continuously update the motor commands. For all of my experiments, I used a target distance of approximately 304 mm from the wall.
+        Using the setup described above, I implemented and tuned a PI controller for orientation control. The final gains used were:
+       
       </p>
+      <pre><code class="language-python">Kp = 0.02  
+        Ki = 0.0005  
+        Kd = 0</code></pre>
 
       <P>
-        During each control loop iteration, the robot reads the ToF measurement, computes the distance error, calculates the control output, applies limits, sends motor commands, and logs controller data.
+        For the recovery task, I set the robot’s initial orientation as the setpoint and then manually disturbed it by pushing it away. From both the video and the plots, the robot is able to return to its original orientation. The response shows overshoot and oscillation as it corrects itself because of the tape on the wheels, but the error decreases over time and the robot eventually settles near the setpoint.
+
       </P>
 
-
-      <p>
-        <strong>Distance Measurement and Error Calculation</strong>
-      </p>
-
-      <P>
-        For the controller I only used the front ToF sensor and it was configured in long distance mode with a timing budget of about 20 ms. In my hardware setup this sensor is the XSHUT-controlled sensor, which is stored as g_tof2. I created a helper function that returns the most recent valid distance measurement:
-      </P>
-
-      <pre><code class="language-cpp">static inline float control_get_raw_distance_mm() {
-  if (g_tof2_last.valid) return (float)g_tof2_last.d_mm;
-  return 0.0f;
-}</code></pre>
-
-      <P>
-        The controller then computes the wall-distance error using equation:
-      </P>
-
-      
-      <p>\[
-        e(t) = \text{setpoint} - \text{distance}
-      \]</p>
-
-      <pre><code class="language-cpp">const float error = g_pid.setpoint_mm - dist_mm;</code></pre>
-
-      <P>
-
-        If the robot is farther than the desired distance, the error becomes positive and the robot should drive forward. If the robot is too close to the wall, the error becomes negative and the robot should move backward.
-      </P>
 
       <p>
-        <strong>PID Controller Implementation</strong>
-      </p>
+        <img class="img-small" src="ori.png" alt="   ">
+        <img class="img-small" src="motor.png" alt="   ">
+        <img class="img-small" src="angle.png" alt="   ">
+    </p>
 
-      <P>
-        The robot motion is controlled using a PID controller equation:
-      </P>
-
-      <p>\[
-        u(t) = K_p e(t) + K_i \int e(t)\,dt + K_d \frac{de(t)}{dt}
-      \]</p>
-
-      <P>
-        In my implementation the PID controller is computed in discrete time using the following code:
-      </P>
-
-      <pre><code class="language-cpp">const float error = g_pid.setpoint_mm - dist_mm;
-        float dt = (now_ms - g_pid.prev_t_ms) * 0.001f;
-        if (dt <= 0.0f) dt = 0.001f;
-        // integral term
-        g_pid.integral += error * dt;
-        g_pid.integral = clamp(g_pid.integral, g_pid.integral_min, g_pid.integral_max);
-        // derivative term
-        const float derivative = (error - g_pid.prev_error) / dt;
-        // individual PID terms
-        const float p_term = g_pid.kp * error;
-        const float i_term = g_pid.ki * g_pid.integral;
-        const float d_term = g_pid.kd * derivative;
-        // final controller output
-        float u = p_term + i_term + d_term;</code></pre>
-
-        <P>
-          The time step dt is computed from the system clock. The integral term accumulates the error over time and is clamped to prevent integral windup. The derivative term estimates the rate of change of the error between successive control updates.
-        </P>
-
-        <p>
-          <strong>Output Limiting and Motor Command</strong>
-        </p>
-
-        <P>
-          During my first experiments the robot approached the wall too quickly and often overshot the desired distance. To improve this behavior, I implemented a distance-dependent output limiter so that the maximum control signal decreases as the robot gets closer to the target.
-        </P>
-
-        <pre><code class="language-cpp">static inline float control_get_dynamic_limit(float error_abs_mm) {
-          if (error_abs_mm > 400.0f) return 0.25f;
-          if (error_abs_mm > 200.0f) return 0.15f;
-          if (error_abs_mm > 80.0f)  return 0.08f;
-          return 0.04f;
-        }</code></pre>
-
-        <P>
-
-          The controller output is then limited and applied to the motors:
-        </P>
-
-        <pre><code class="language-cpp">float u_limit = control_get_dynamic_limit(fabs(error));
-          u = clamp(u, -u_limit, u_limit);
-          // stop band near the setpoint
-          if (fabs(error) < 10.0f) {
-            motors_stop();
-            g_pid.prev_error = error;
-            g_pid.prev_t_ms = now_ms;
-            return;
-          }
-          // send command to motors
-          if (g_motors_enabled) {
-            motors_set_normalized(-u);
-          } else {
-            motors_stop();
-          }</code></pre>
-
-          <P>
-            This section of the code performs three tasks. First, it limits the maximum control signal so the robot slows down as it approaches the wall. Second, it introduces a small stop band around the setpoint to prevent constant oscillations near the target distance. Finally, it converts the normalized control signal into motor commands.
-          </P>
-          <p>
-            I used <code>-u</code> in the motor command because of the motor orientation on my robot, so a positive control output drives the robot toward the wall.
-          </p>
-
-
-      </div>
-
-
-    <div class="card">
-
-     <h4>2. PID</h4>
-
-        <p><strong>P</strong></p>
-
-        <P>
-
-          I first tested the controller using only proportional control with gains K_p = 0.001, K_i = 0, and K_d = 0. As shown in the ToF vs time plot, the robot approaches the wall quickly and slows down as the error decreases. However, the robot overshoots and settles too close to the wall. The motor input plot shows the controller applying a small corrective command after the overshoot, but the output becomes too small to move the robot back to the setpoint.
-
-        </P>
-
-        <p>
-          <img class="img-small" src="0.001 P2.png" alt="   ">
-          <img class="img-small" src="0.001 P1.png" alt="   ">
-          <img class="img-small" src="0.001 P.png" alt="   ">
-      </p>
-
-        <div class="video-wrap">
-          <iframe src="https://www.youtube.com/embed/mG42YU0lPXs" allowfullscreen></iframe>
-        </div>
-
-
-        
-
-
-        <p><strong>PI</strong></p>
-
-        <P>
-
-          To reduce the steady-state error observed with proportional control, I added an integral term and tested a PI controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0. As shown in the plots, the robot approaches the wall and settles closer to the target distance compared to the proportional-only controller. The integral term accumulates the error over time, which increases the control signal and helps overcome motor deadband and friction. 
-        </P>
-
-
-        <p>
-          <img class="img-small" src="0.001|0.00015|0 2.png" alt="   ">
-          <img class="img-small" src="0.001|0.00015|0 1.png" alt="   ">
-          <img class="img-small" src="0.001|0.00015|0.png" alt="   ">
-      </p>
 
       <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/td54BleCAIU" allowfullscreen></iframe>
+        <iframe src="https://www.youtube.com/embed/imqZuxNrzAw" allowfullscreen></iframe>
       </div>
 
 
-      <p><strong>PID</strong></p>
-
-
       <P>
-        Finally, I tested a full PID controller with gains K_p = 0.001, K_i = 0.00015, and K_d = 0.00015. As shown in the plots, the robot approaches the wall and settles closest to the desired distance compared with the previous controllers. The derivative term helps slow the robot as it nears the setpoint, which reduces overshoot and improves the final accuracy. However, the PID terms plot shows that the derivative term produces large spikes due to noise in the ToF measurements, which also appears as fluctuations in the motor input. From this observation, a low-pass filter on the derivative term would likely improve stability by reducing the effect of sensor noise.
+        For the second task, I commanded two sequential 90° turns. The robot first rotated from approximately 0° to 90° and settled near the setpoint, then rotated from 90° to 180° and again converged close to the target. Compared to the recovery task, the response here is smoother and more repeatable, with smaller oscillations after each turn.
       </P>
 
       <p>
         <img class="img-small" src="1.png" alt="   ">
-        <img class="img-small" src="2.png" alt="   ">
-        <img class="img-small" src="3.png" alt="   ">
     </p>
 
+
+
       <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/PMJ7tQJ70gg" allowfullscreen></iframe>
+        <iframe src="https://www.youtube.com/embed/DGzgDYycaVk" allowfullscreen></iframe>
       </div>
+
 
       <P>
 
+        Overall, the final PI controller achieved stable and repeatable orientation control. The proportional term provided the main turning response, while the small integral term reduced steady-state error. Although some oscillation remained, the robot was able to complete both required tasks successfully.
       </P>
-
-
-      <p>
-        I also tested the controller under external perturbations by pushing the robot both away from the wall and toward the wall during operation. As shown in the video below, the robot was able to recover and return to the setpoint. 
-      </p>
-
-      <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/vPhF6TbLGeM" allowfullscreen></iframe>
+    
       </div>
 
 
-    </div>
-
-
     <div class="card">
 
-    <h4>3. Extrapolation</h4>
-
-        <p>
-          At first, the PID controller was limited by the update rate of the ToF sensor because the controller could only react when a new distance measurement became available. To improve this, I decoupled the control loop from the sensor update rate so that the PID controller runs every loop iteration, even if the ToF sensor has not produced a new reading yet.
-        </p>
-
-        <P>
-          In the main loop, the ToF update and the control update are handled separately. The controller runs whenever control is enabled, while the ToF sensor only updates when new data is available.
-        </P>
-        <pre><code class="language-cpp">void loop() {
-          imu_update();
-          if (g_tof_running) {
-            tof_update();
-          }
-          ble_update();
-          if (g_control_enabled) {
-            control_update();
-          }
-        }</code></pre>
-
-        <P>
-          I measured the approximate execution rates of both processes. The control loop runs at about 127.04 Hz, while the ToF sensor produces new measurements at about 9.98 Hz. This means the controller runs much faster than the sensor, so using only the last ToF reading can make the distance estimate lag behind the robot’s real motion.
-        </P>
+     <h4>2. Wind-up</h4>
 
 
 
         <P>
-          To address this issue, I implemented a simple linear extrapolation algorithm to estimate the robot’s current distance between ToF updates. Every time a new ToF reading is received, I store the last two measurements along with their timestamps. These values are used to estimate the slope of the distance change:
-        </P>
 
- 
-        <p>\[
-          m = \frac{d_2 - d_1}{t_2 - t_1}
-        \]</p>
-
-        <P>
-          Then, if the controller runs before a new sensor measurement arrives, the current distance is estimated using the elapsed time since the last sample:
-        </P>
-
- 
-        <p>\[
-          d_{est} = d_2 + m (t - t_2)
-        \]</p>
-        <pre><code class="language-cpp">static inline float control_get_estimated_distance_mm() {
-  if (!g_tof2_last.valid) return 0.0f;
-  if (!g_tof2_prev.valid) return (float)g_tof2_last.d_mm;
-
-  float dt_hist = (g_tof2_last.t_ms - g_tof2_prev.t_ms) * 0.001f;
-  if (dt_hist <= 0.0f) return (float)g_tof2_last.d_mm;
-
-  float slope = ((float)g_tof2_last.d_mm - (float)g_tof2_prev.d_mm) / dt_hist;
-  float dt_now = (millis() - g_tof2_last.t_ms) * 0.001f;
-  return (float)g_tof2_last.d_mm + slope * dt_now;
-}</code></pre>
-
-        <P>
-          In my controller implementation, both the raw distance and the extrapolated distance are available, but the extrapolated value is used for the control calculation because it better represents the robot's current position between ToF updates.
-        </P>
-
-
-        <pre><code class="language-cpp">const float raw_dist_mm = control_get_raw_distance_mm();
-          const float est_dist_mm = control_get_estimated_distance_mm();
-          
-          const float error = g_pid.setpoint_mm - est_dist_mm;</code></pre>
-
-        <P>
-          This allows the PID controller to keep updating even when the ToF sensor has not returned a new measurement yet. As a result, the control loop can operate at the full controller rate while still incorporating new sensor readings whenever they become available.
+          I reused the wind-up protection from Lab 5 by limiting the growth of the integral term. Without wind-up protection, I observed that the robot would continue turning past the target angle and exhibit larger oscillations before settling. This happens because the integral term keeps accumulating error while the robot is still far from the setpoint, causing the controller to apply excessive correction even after the robot has crossed the target.
         </P>
 
         <p>
-          The figure below compares the raw ToF measurements with the extrapolated distance estimate used by the controller. 
+          With wind-up protection enabled, the response became more stable and the overshoot was reduced. This was especially noticeable during the recovery task, where the robot needed to correct large disturbances. Wind-up protection is also important when testing on different floor surfaces, since changes in traction affect how quickly the robot responds and can otherwise lead to inconsistent behavior.
         </p>
-        <p>
-          <img class="img-small" src="4.png" alt="   ">
-        </p>
+
+
+
 
     </div>
 
 
-
-
-
-    <div class="card">
-
-        <h4>4. wind-up protection</h4>
-
-        <P>
-          The PID controller implemented earlier already included an integral clamp to prevent wind-up. To demonstrate the importance of this protection, I compared the controller behavior using two different integral bounds.
-
-        </P>
-
-        <P>
-          In the first test, a loose bound (±2000) was used, which allows the integral term to accumulate a large amount of error during the robot’s approach to the wall. In the second test, the bound was tightened to ±200, which actively limits the integral accumulation.
-        </P>
-
-        <p>
-          <img class="img-small" src="tight.png" alt="   ">
-        </p>
-
-        <p>
-          <img class="img-small" src="loose.png" alt="   ">
-        </p>
-
-        <P>
-          From the plot above we can see that the integral term grows larger during the approach with the loose clamp, causing the robot to overshoot significantly and drive very close to the wall before recovering. And with the tighter clamp where the accumulated error is limited, which reduces overshoot and allows the robot to settle closer to the set point.
-        </P>
-
-    </div>
 
     <div class="footer">
       <a class="back-button" href="../../index.html">← Back to Main Page</a>

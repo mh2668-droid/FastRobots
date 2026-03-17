@@ -235,9 +235,7 @@ right = forward - turn;</code></pre>
       The control output is applied as a differential motor command to rotate the robot.
     </p>
 
-    <pre><code class="language-python">Kp = 0.02  
-Ki = 0.0005  
-Kd = 0</code></pre>
+    <pre><code class="language-python">Kp = 0.02  Ki = 0.0005  Kd = 0</code></pre>
 
     <p>
       For the recovery task, I set the robot’s initial orientation as the setpoint and then manually disturbed it. The robot successfully returned to its original orientation. The response shows overshoot and oscillation due to wheel traction effects, but the error decreases over time and settles near the setpoint.

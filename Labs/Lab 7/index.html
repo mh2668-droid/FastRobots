@@ -490,7 +490,8 @@
           A simplified version of the implementation is shown below:
          </p>
 
-         <pre><code class="language-python">def kf(mu, sigma, u, y, Ad, Bd, C, Sigma_u, Sigma_z):
+         <pre><code class="language-python">
+          def kf(mu, sigma, u, y, Ad, Bd, C, Sigma_u, Sigma_z):
           mu_p = Ad @ mu + Bd * u
           sigma_p = Ad @ sigma @ Ad.T + Sigma_u
       
@@ -507,7 +508,8 @@
           The filter was applied across the dataset as follows:
          </p>
 
-         <pre><code class="language-python">mu = x0.copy()
+         <pre><code class="language-python">
+            mu = x0.copy()
             sigma = P0.copy()
             
             mu_hist = []
@@ -542,9 +544,7 @@
            \text{Mean error} = 3.31 \text{ mm}
            \]
          </p>
-
           <p>
-            <img class="img-small" src="T 3.png" alt="   ">
             <img class="img-medium" src="T 3.png" alt="   ">
 
         </p>
@@ -559,8 +559,7 @@
         <div class="card">
 
           <h4>4. Implement the Kalman Filter on the Robot</h4>
-     
-     
+    
      
              <P>
      

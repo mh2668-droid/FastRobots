@@ -443,32 +443,25 @@
       [0.0, 1.0],
       [0.0, -d_est / m_est]
   ])
-  
   B = np.array([
       [0.0],
       [1.0 / m_est]
   ])
-  
   C = np.array([[-1.0, 0.0]])
-  
   Ad = np.eye(2) + dt * A
   Bd = dt * B
-  
   x0 = np.array([
       [-tof[0]],
       [0.0]
   ])
-  
   P0 = np.array([
       [100.0**2, 0.0],
       [0.0, 300.0**2]
   ])
-  
   sig_u = np.array([
       [sigma_1**2, 0.0],
       [0.0, sigma_2**2]
   ])
-  
   sig_z = np.array([[sigma_3**2]])</code></pre>
     </div>
 
@@ -573,7 +566,8 @@
              </P>
 
 
-             <pre><code class="language-cpp">// control.hpp
+             <pre><code class="language-cpp">
+              // control.hpp
               const float raw_dist_mm = control_get_distance_mm();
               
               kf_step(g_pid.last_u, raw_dist_mm);

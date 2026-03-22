@@ -434,10 +434,6 @@
       \]
      </p>
 
-     <p>
-      These values balance how much the filter trusts the model versus the sensor.
-     </p>
-
 
      <p>
       Python code implementation
@@ -549,12 +545,15 @@
 
           <p>
             <img class="img-small" src="T 3.png" alt="   ">
+            <img class="img-medium" src="T 3.png" alt="   ">
 
         </p>
 
         <p>
           Because the estimated velocity is not directly measured, the figure shows an initial transient where the value starts higher than expected and then decreases before stabilizing. This is due to the initial state and small inconsistencies in the first few ToF measurements. After approximately 0.3–0.5 seconds, the estimate converges and remains stable.
         </p>
+
+    </div>
 
 
         <div class="card">
@@ -575,7 +574,7 @@
              </P>
 
 
-             <pre><code class="language-python">// control.hpp
+             <pre><code class="language-cpp">// control.hpp
               const float raw_dist_mm = control_get_distance_mm();
               
               kf_step(g_pid.last_u, raw_dist_mm);
@@ -601,7 +600,7 @@
                 </p>
 
              <p>
-              <img class="img-small" src="T 4.png" alt="   ">
+              <img class="img-medium" src="T 4.png" alt="   ">
   
           </p>
 

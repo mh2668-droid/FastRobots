@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 7 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <!-- MathJax for LaTeX equations -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .img-small {
+      max-width: 360px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .img-medium {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 7: Kalman Filter</h1>
+   
+    <div class="card">
+      <h3>Objective</h3>
+      <p>
+        The goal of Lab 7 is to use a Kalman Filter to better estimate the robot’s distance and speed. Instead of relying only on noisy ToF sensor readings, the filter combines a model of the system with sensor data to give smoother and more accurate results. This helps the robot move faster toward the wall while still being able to stop or react at the correct distance.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Tasks</h3>
+
+      <div class="card">
+
+
+      <h4>1. Estimate Drag and Momentum</h4>
+
+      <p>
+        To build the state-space model for the Kalman filter, I first needed to estimate the effective drag term d and momentum term m of the robot. Following the lab procedure, I did this using a step response. In this test, I drove the robot toward a wall with a 60% constant motor input and logged the ToF sensor output over time. The goal was to find the robot’s steady-state speed and its 90% rise time, since those values can be used to estimate d and m. 
+      </p>
+      
+      <p>
+        The simplified 1D model used in lecture is
+      </p>
+      
+      <p>
+        \[
+        m\ddot{x} = u - d\dot{x}
+        \]
+      </p>
+      
+      <p>
+        or equivalently,
+      </p>
+      
+      <p>
+        m\ddot{x} + d\dot{x} = u
+      </p>
+      <p>
+        At steady state, acceleration is zero, so:
+      </p>
+
+      <p>
+        
+d = \frac{u}{\dot{x}_{ss}}
+      </p>
+      <P>
+        where \dot{x}_{ss} is the steady-state speed. The momentum term was estimated from the 90% rise time using
+      </P>
+
+      <P>
+        m = -\frac{d\,t_{0.9}}{\ln(1-0.9)}
+      </P>
+      <P>
+        The raw ToF data is discrete and stair stepped, so directly differentiating it produced noisy speed spikes. To get a more reliable speed estimate, I used only the fresh ToF samples, converted time to seconds, lightly smoothed the distance data, and then computed speed from the slope of the smoothed position signal.
+
+      </P>
+      <p>
+        <img class="img-small" src="T1 2.png" alt="   ">
+
+    </p>
+
+      <P>
+        The figure shows both the ToF distance and computed speed over time. The distance curve starts slightly curved and becomes more linear, showing the robot speeds up and then moves at a near-constant velocity. The speed plot rises from near zero and levels off, which indicates a steady-state region used to estimate the final speed and rise time.
+
+        
+      </P>
+
+
+      <p>
+        <img class="img-small" src="T1 1.png" alt="   ">
+
+    </p>
+
+    <P>
+      the gifure above shows the speed plot again with the steady-state speed, 90% of steady-state, and the selected 90% rise-time point marked.
+
+    </P>
+
+      <P>
+        From the processed data, I first computed the robot speed by taking the derivative of the smoothed ToF distance. I then selected a steady-state region near the end of the run where the speed was approximately constant, and averaged it to get:
+
+\dot{x}_{ss} = 2039.370 \text{ mm/s}
+
+Next, I computed 90% of the steady-state speed:
+
+0.9\dot{x}_{ss} = 1835.433 \text{ mm/s}
+
+I found the first time the speed reached this value, which gave:
+
+\dot{x}(t_{0.9}) = 1871.015 \text{ mm/s}, \quad t_{0.9} = 1.044 \text{ s}
+
+Using the model m\ddot{x} + d\dot{x} = u, I computed:
+
+d = \frac{u}{\dot{x}_{ss}} = \frac{0.6}{2039.370} = 0.000294
+
+m = -\frac{d\,t_{0.9}}{\ln(0.1)} = 0.000133
+
+These values are for building the state-space model for the Kalman filter later.
+
+
+
+      </P>
+    
+      </div>
+
+
+    <div class="card">
+
+     <h4>2. Initialize KF (Python)</h4>
+
+
+     <P>
+      After estimating the drag d and momentum m from Task 1, I used them to build a state-space model for the robot. The state is defined as position and velocity:Using the drag d and momentum m estimated in Task 1, I built a state-space model for the robot with position and velocity as the states:
+
+      x =
+      \begin{bmatrix}
+      x \\
+      \dot{x}
+      \end{bmatrix}
+      
+      The system matrix is:
+      
+      A =
+      \begin{bmatrix}
+      0 & 1 \\
+      0 & -d/m
+      \end{bmatrix}
+      
+      and the input matrix is:
+      
+      B =
+      \begin{bmatrix}
+      0 \\
+      1/m
+      \end{bmatrix}
+      
+      Since the ToF sensor measures distance to the wall, the measurement matrix is:
+      
+      C = [-1 \quad 0]
+
+
+
+     </P>
+
+
+     <P>
+      Using the values from Task 1, I get:
+
+d = 0.000294, \quad m = 0.000133
+
+A =
+\begin{bmatrix}
+0 & 1 \\
+0 & -2.2105
+\end{bmatrix}, \quad
+B =
+\begin{bmatrix}
+0 \\
+7518.7970
+\end{bmatrix}
+
+
+     </P>
+
+     <P>
+      The sampling time was computed from the ToF data:
+
+\Delta t = 0.099895 \text{ s}
+
+The discrete system is:
+
+A_d = I + \Delta t A, \quad B_d = \Delta t B
+
+A_d =
+\begin{bmatrix}
+1 & 0.0999 \\
+0 & 0.7792
+\end{bmatrix}, \quad
+B_d =
+\begin{bmatrix}
+0 \\
+751.0882
+\end{bmatrix}
+     </P>
+
+
+
+     <P>
+
+      The initial state uses the first ToF measurement and zero velocity:
+
+x_0 =
+\begin{bmatrix}
+-2885 \\
+0
+\end{bmatrix}
+
+The initial covariance is:
+
+P_0 =
+\begin{bmatrix}
+10000 & 0 \\
+0 & 90000
+\end{bmatrix}
+
+
+
+     </P>
+
+     <P>
+
+      The measurement noise was set based on ToF uncertainty:
+
+\sigma_3 = 20 \text{ mm}
+
+The process noise was chosen based on the lecture scale:
+
+\sigma_1 = \sigma_2 = 31.639
+
+\Sigma_u =
+\begin{bmatrix}
+1001.05 & 0 \\
+0 & 1001.05
+\end{bmatrix}, \quad
+\Sigma_z =
+\begin{bmatrix}
+400
+\end{bmatrix}
+
+These values balance how much the filter trusts the model versus the sensor.
+     </P>
+
+
+     <P>
+
+      pyhton code implementation
+     </P>
+
+     <pre><code class="language-python">A = np.array([
+      [0.0, 1.0],
+      [0.0, -d_est / m_est]
+  ])
+  
+  B = np.array([
+      [0.0],
+      [1.0 / m_est]
+  ])
+  
+  C = np.array([[-1.0, 0.0]])
+  
+  Ad = np.eye(2) + dt * A
+  Bd = dt * B
+  
+  x0 = np.array([
+      [-tof[0]],
+      [0.0]
+  ])
+  
+  P0 = np.array([
+      [100.0**2, 0.0],
+      [0.0, 300.0**2]
+  ])
+  
+  sig_u = np.array([
+      [sigma_1**2, 0.0],
+      [0.0, sigma_2**2]
+  ])
+  
+  sig_z = np.array([[sigma_3**2]])</code></pre>
+    </div>
+
+    <div class="card">
+      
+      <h4>3. Implement and test Kalman Filter in Jupyter</h4>
+ 
+ 
+ 
+         <P>
+ 
+           I reused the wind-up protection from Lab 5 by limiting the growth of the integral term. Without wind-up protection, I observed that the robot would continue turning past the target angle and exhibit larger oscillations before settling. This happens because the integral term keeps accumulating error while the robot is still far from the setpoint, causing the controller to apply excessive correction even after the robot has crossed the target.
+         </P>
+ 
+         <p>
+           With wind-up protection enabled, the response became more stable and the overshoot was reduced. This was especially noticeable during the recovery task, where the robot needed to correct large disturbances. Wind-up protection is also important when testing on different floor surfaces, since changes in traction affect how quickly the robot responds and can otherwise lead to inconsistent behavior.
+         </p>
+ 
+ 
+ 
+ 
+     </div>
+
+
+
+
+
+
+
+
+
+    <div class="footer">
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+    </div>
+  </div>
+</body>
+</html>

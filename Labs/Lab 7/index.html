@@ -151,23 +151,28 @@
       </p>
       
       <p>
+        \[
         m\ddot{x} + d\dot{x} = u
+        \]
       </p>
       <p>
         At steady state, acceleration is zero, so:
       </p>
 
       <p>
-        
-d = \frac{u}{\dot{x}_{ss}}
+        \[
+        d = \frac{u}{\dot{x}_{ss}}
+        \]
       </p>
-      <P>
+      <p>
         where \dot{x}_{ss} is the steady-state speed. The momentum term was estimated from the 90% rise time using
-      </P>
+      </p>
 
-      <P>
+      <p>
+        \[
         m = -\frac{d\,t_{0.9}}{\ln(1-0.9)}
-      </P>
+        \]
+      </p>
       <P>
         The raw ToF data is discrete and stair stepped, so directly differentiating it produced noisy speed spikes. To get a more reliable speed estimate, I used only the fresh ToF samples, converted time to seconds, lightly smoothed the distance data, and then computed speed from the slope of the smoothed position signal.
 
@@ -194,30 +199,55 @@ d = \frac{u}{\dot{x}_{ss}}
 
     </P>
 
-      <P>
+      <p>
         From the processed data, I first computed the robot speed by taking the derivative of the smoothed ToF distance. I then selected a steady-state region near the end of the run where the speed was approximately constant, and averaged it to get:
+      </p>
 
-\dot{x}_{ss} = 2039.370 \text{ mm/s}
+      <p>
+        \[
+        \dot{x}_{ss} = 2039.370 \text{ mm/s}
+        \]
+      </p>
 
-Next, I computed 90% of the steady-state speed:
+      <p>
+        Next, I computed 90% of the steady-state speed:
+      </p>
 
-0.9\dot{x}_{ss} = 1835.433 \text{ mm/s}
+      <p>
+        \[
+        0.9\dot{x}_{ss} = 1835.433 \text{ mm/s}
+        \]
+      </p>
 
-I found the first time the speed reached this value, which gave:
+      <p>
+        I found the first time the speed reached this value, which gave:
+      </p>
 
-\dot{x}(t_{0.9}) = 1871.015 \text{ mm/s}, \quad t_{0.9} = 1.044 \text{ s}
+      <p>
+        \[
+        \dot{x}(t_{0.9}) = 1871.015 \text{ mm/s}, \quad t_{0.9} = 1.044 \text{ s}
+        \]
+      </p>
 
-Using the model m\ddot{x} + d\dot{x} = u, I computed:
+      <p>
+        Using the model \(m\ddot{x} + d\dot{x} = u\), I computed:
+      </p>
 
-d = \frac{u}{\dot{x}_{ss}} = \frac{0.6}{2039.370} = 0.000294
+      <p>
+        \[
+        d = \frac{u}{\dot{x}_{ss}} = \frac{0.6}{2039.370} = 0.000294
+        \]
+      </p>
 
-m = -\frac{d\,t_{0.9}}{\ln(0.1)} = 0.000133
+      <p>
+        \[
+        m = -\frac{d\,t_{0.9}}{\ln(0.1)} = 0.000133
+        \]
+      </p>
 
-These values are for building the state-space model for the Kalman filter later.
-
-
-
-      </P>
+      <p>
+        These values are for building the state-space model for the Kalman filter later.
+      </p>
     
       </div>
 
@@ -227,132 +257,191 @@ These values are for building the state-space model for the Kalman filter later.
      <h4>2. Initialize KF (Python)</h4>
 
 
-     <P>
-      After estimating the drag d and momentum m from Task 1, I used them to build a state-space model for the robot. The state is defined as position and velocity:Using the drag d and momentum m estimated in Task 1, I built a state-space model for the robot with position and velocity as the states:
+     <p>
+      After estimating the drag \(d\) and momentum \(m\) from Task 1, I used them to build a state-space model for the robot. The state is defined as position and velocity:
+     </p>
 
+     <p>
+      \[
       x =
       \begin{bmatrix}
       x \\
       \dot{x}
       \end{bmatrix}
-      
+      \]
+     </p>
+
+     <p>
       The system matrix is:
-      
+     </p>
+
+     <p>
+      \[
       A =
       \begin{bmatrix}
       0 & 1 \\
       0 & -d/m
       \end{bmatrix}
-      
+      \]
+     </p>
+
+     <p>
       and the input matrix is:
-      
+     </p>
+
+     <p>
+      \[
       B =
       \begin{bmatrix}
       0 \\
       1/m
       \end{bmatrix}
-      
+      \]
+     </p>
+
+     <p>
       Since the ToF sensor measures distance to the wall, the measurement matrix is:
-      
+     </p>
+
+     <p>
+      \[
       C = [-1 \quad 0]
+      \]
+     </p>
 
 
-
-     </P>
-
-
-     <P>
+     <p>
       Using the values from Task 1, I get:
+     </p>
 
-d = 0.000294, \quad m = 0.000133
+     <p>
+      \[
+      d = 0.000294, \quad m = 0.000133
+      \]
+     </p>
 
-A =
-\begin{bmatrix}
-0 & 1 \\
-0 & -2.2105
-\end{bmatrix}, \quad
-B =
-\begin{bmatrix}
-0 \\
-7518.7970
-\end{bmatrix}
+     <p>
+      \[
+      A =
+      \begin{bmatrix}
+      0 & 1 \\
+      0 & -2.2105
+      \end{bmatrix}, \quad
+      B =
+      \begin{bmatrix}
+      0 \\
+      7518.7970
+      \end{bmatrix}
+      \]
+     </p>
 
-
-     </P>
-
-     <P>
+     <p>
       The sampling time was computed from the ToF data:
+     </p>
 
-\Delta t = 0.099895 \text{ s}
+     <p>
+      \[
+      \Delta t = 0.099895 \text{ s}
+      \]
+     </p>
 
-The discrete system is:
+     <p>
+      The discrete system is:
+     </p>
 
-A_d = I + \Delta t A, \quad B_d = \Delta t B
+     <p>
+      \[
+      A_d = I + \Delta t A, \quad B_d = \Delta t B
+      \]
+     </p>
 
-A_d =
-\begin{bmatrix}
-1 & 0.0999 \\
-0 & 0.7792
-\end{bmatrix}, \quad
-B_d =
-\begin{bmatrix}
-0 \\
-751.0882
-\end{bmatrix}
-     </P>
+     <p>
+      \[
+      A_d =
+      \begin{bmatrix}
+      1 & 0.0999 \\
+      0 & 0.7792
+      \end{bmatrix}, \quad
+      B_d =
+      \begin{bmatrix}
+      0 \\
+      751.0882
+      \end{bmatrix}
+      \]
+     </p>
 
 
 
-     <P>
-
+     <p>
       The initial state uses the first ToF measurement and zero velocity:
+     </p>
 
-x_0 =
-\begin{bmatrix}
--2885 \\
-0
-\end{bmatrix}
+     <p>
+      \[
+      x_0 =
+      \begin{bmatrix}
+      -2885 \\
+      0
+      \end{bmatrix}
+      \]
+     </p>
 
-The initial covariance is:
+     <p>
+      The initial covariance is:
+     </p>
 
-P_0 =
-\begin{bmatrix}
-10000 & 0 \\
-0 & 90000
-\end{bmatrix}
+     <p>
+      \[
+      P_0 =
+      \begin{bmatrix}
+      10000 & 0 \\
+      0 & 90000
+      \end{bmatrix}
+      \]
+     </p>
 
-
-
-     </P>
-
-     <P>
-
+     <p>
       The measurement noise was set based on ToF uncertainty:
+     </p>
 
-\sigma_3 = 20 \text{ mm}
+     <p>
+      \[
+      \sigma_3 = 20 \text{ mm}
+      \]
+     </p>
 
-The process noise was chosen based on the lecture scale:
+     <p>
+      The process noise was chosen based on the lecture scale:
+     </p>
 
-\sigma_1 = \sigma_2 = 31.639
+     <p>
+      \[
+      \sigma_1 = \sigma_2 = 31.639
+      \]
+     </p>
 
-\Sigma_u =
-\begin{bmatrix}
-1001.05 & 0 \\
-0 & 1001.05
-\end{bmatrix}, \quad
-\Sigma_z =
-\begin{bmatrix}
-400
-\end{bmatrix}
+     <p>
+      \[
+      \Sigma_u =
+      \begin{bmatrix}
+      1001.05 & 0 \\
+      0 & 1001.05
+      \end{bmatrix}, \quad
+      \Sigma_z =
+      \begin{bmatrix}
+      400
+      \end{bmatrix}
+      \]
+     </p>
 
-These values balance how much the filter trusts the model versus the sensor.
-     </P>
+     <p>
+      These values balance how much the filter trusts the model versus the sensor.
+     </p>
 
 
-     <P>
-
-      pyhton code implementation
-     </P>
+     <p>
+      Python code implementation
+     </p>
 
      <pre><code class="language-python">A = np.array([
       [0.0, 1.0],

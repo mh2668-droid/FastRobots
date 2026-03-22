@@ -436,33 +436,37 @@
 
 
      <p>
-      Python code implementation
+      Python code implementation:
      </p>
 
      <pre><code class="language-python">A = np.array([
-      [0.0, 1.0],
-      [0.0, -d_est / m_est]
-  ])
-  B = np.array([
-      [0.0],
-      [1.0 / m_est]
-  ])
-  C = np.array([[-1.0, 0.0]])
-  Ad = np.eye(2) + dt * A
-  Bd = dt * B
-  x0 = np.array([
-      [-tof[0]],
-      [0.0]
-  ])
-  P0 = np.array([
-      [100.0**2, 0.0],
-      [0.0, 300.0**2]
-  ])
-  sig_u = np.array([
-      [sigma_1**2, 0.0],
-      [0.0, sigma_2**2]
-  ])
-  sig_z = np.array([[sigma_3**2]])</code></pre>
+    [0.0, 1.0],
+    [0.0, -d_est / m_est]
+])
+B = np.array([
+    [0.0],
+    [1.0 / m_est]
+])
+C = np.array([[-1.0, 0.0]])
+
+Ad = np.eye(2) + dt * A
+Bd = dt * B
+
+x0 = np.array([
+    [-tof[0]],
+    [0.0]
+])
+P0 = np.array([
+    [100.0**2, 0.0],
+    [0.0, 300.0**2]
+])
+
+sig_u = np.array([
+    [sigma_1**2, 0.0],
+    [0.0, sigma_2**2]
+])
+sig_z = np.array([[sigma_3**2]])
+</code></pre>
     </div>
 
     <div class="card">
@@ -484,35 +488,37 @@
          </p>
 
          <pre><code class="language-python">
-          def kf(mu, sigma, u, y, Ad, Bd, C, Sigma_u, Sigma_z):
-          mu_p = Ad @ mu + Bd * u
-          sigma_p = Ad @ sigma @ Ad.T + Sigma_u
-      
-          sigma_m = C @ sigma_p @ C.T + Sigma_z
-          kkf_gain = sigma_p @ C.T @ np.linalg.inv(sigma_m)
-      
-          y_m = y - C @ mu_p
-          mu = mu_p + kkf_gain @ y_m
-          sigma = (np.eye(2) - kkf_gain @ C) @ sigma_p
-      
-          return mu, sigma</code></pre>
+def kf(mu, sigma, u, y, Ad, Bd, C, Sigma_u, Sigma_z):
+    mu_p = Ad @ mu + Bd * u
+    sigma_p = Ad @ sigma @ Ad.T + Sigma_u
+
+    sigma_m = C @ sigma_p @ C.T + Sigma_z
+    kkf_gain = sigma_p @ C.T @ np.linalg.inv(sigma_m)
+
+    y_m = y - C @ mu_p
+    mu = mu_p + kkf_gain @ y_m
+    sigma = (np.eye(2) - kkf_gain @ C) @ sigma_p
+
+    return mu, sigma
+</code></pre>
 
          <p>
           The filter was applied across the dataset as follows:
          </p>
 
          <pre><code class="language-python">
-            mu = x0.copy()
-            sigma = P0.copy()
-            
-            mu_hist = []
-            
-            for k in range(len(t)):
-                u_k = float(u_kf[k])
-                y_k = np.array([[float(-tof[k])]])
-            
-                mu, sigma = kf(mu, sigma, u_k, y_k, Ad, Bd, C, sig_u, sig_z)
-                mu_hist.append(mu.flatten())</code></pre>
+mu = x0.copy()
+sigma = P0.copy()
+
+mu_hist = []
+
+for k in range(len(t)):
+    u_k = float(u_kf[k])
+    y_k = np.array([[float(-tof[k])]])
+
+    mu, sigma = kf(mu, sigma, u_k, y_k, Ad, Bd, C, sig_u, sig_z)
+    mu_hist.append(mu.flatten())
+</code></pre>
 
          <p>
           The Kalman Filter combines the system model with noisy sensor measurements to estimate both distance and velocity.
@@ -567,24 +573,24 @@
 
 
              <pre><code class="language-cpp">
-              // control.hpp
-              const float raw_dist_mm = control_get_distance_mm();
-              
-              kf_step(g_pid.last_u, raw_dist_mm);
-              
-              const float est_dist_mm = kf_get_estimated_distance_mm();
-              const float est_vel_mm_s = kf_get_estimated_velocity_mm_s();
-              
-              const float control_dist_mm = (est_dist_mm > 0.0f)
-                                              ? ((est_dist_mm < raw_dist_mm) ? est_dist_mm : raw_dist_mm)
-                                              : raw_dist_mm;
-              
-              const float error = g_pid.setpoint_mm - control_dist_mm;
-              </code></pre>
+// control.hpp
+const float raw_dist_mm = control_get_distance_mm();
+
+kf_step(g_pid.last_u, raw_dist_mm);
+
+const float est_dist_mm = kf_get_estimated_distance_mm();
+const float est_vel_mm_s = kf_get_estimated_velocity_mm_s();
+
+const float control_dist_mm = (est_dist_mm > 0.0f)
+    ? ((est_dist_mm < raw_dist_mm) ? est_dist_mm : raw_dist_mm)
+    : raw_dist_mm;
+
+const float error = g_pid.setpoint_mm - control_dist_mm;
+</code></pre>
 
 
               <p>
-                Inside KF.hpp, the Kalman Filter follows the standard prediction and update structure. The previous input is used to predict the next state, and the newest ToF measurement is used to correct the prediction:
+                Inside KF.hpp, the Kalman Filter follows the standard prediction and update structure. The previous input is used to predict the next state, and the newest ToF measurement is used to correct the prediction.
               </p>
 
 

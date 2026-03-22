@@ -195,7 +195,7 @@
     </p>
 
     <P>
-      the gifure above shows the speed plot again with the steady-state speed, 90% of steady-state, and the selected 90% rise-time point marked.
+      the figure above shows the speed plot again with the steady-state speed, 90% of steady-state, and the selected 90% rise-time point marked.
 
     </P>
 
@@ -482,28 +482,157 @@
  
  
  
-         <P>
- 
-           I reused the wind-up protection from Lab 5 by limiting the growth of the integral term. Without wind-up protection, I observed that the robot would continue turning past the target angle and exhibit larger oscillations before settling. This happens because the integral term keeps accumulating error while the robot is still far from the setpoint, causing the controller to apply excessive correction even after the robot has crossed the target.
-         </P>
- 
          <p>
-           With wind-up protection enabled, the response became more stable and the overshoot was reduced. This was especially noticeable during the recovery task, where the robot needed to correct large disturbances. Wind-up protection is also important when testing on different floor surfaces, since changes in traction affect how quickly the robot responds and can otherwise lead to inconsistent behavior.
+          To verify that the Kalman Filter works correctly, I implemented it in Python using the matrices from Task 2 and applied it to the same straight-run dataset collected in Task 1. The dataset includes time, ToF distance measurements, and the motor input.
          </p>
- 
- 
- 
- 
+
+         <p>
+          Before running the filter, I formatted the data so that all input arrays had the same length and were aligned in time. The motor input was also scaled to match the step size used during the experiment. I then looped through the dataset and applied the Kalman Filter at each time step.
+         </p>
+
+         <p>
+          A simplified version of the implementation is shown below:
+         </p>
+
+         <pre><code class="language-python">def kf(mu, sigma, u, y, Ad, Bd, C, Sigma_u, Sigma_z):
+          mu_p = Ad @ mu + Bd * u
+          sigma_p = Ad @ sigma @ Ad.T + Sigma_u
+      
+          sigma_m = C @ sigma_p @ C.T + Sigma_z
+          kkf_gain = sigma_p @ C.T @ np.linalg.inv(sigma_m)
+      
+          y_m = y - C @ mu_p
+          mu = mu_p + kkf_gain @ y_m
+          sigma = (np.eye(2) - kkf_gain @ C) @ sigma_p
+      
+          return mu, sigma</code></pre>
+
+         <p>
+          The filter was applied across the dataset as follows:
+         </p>
+
+         <pre><code class="language-python">mu = x0.copy()
+            sigma = P0.copy()
+            
+            mu_hist = []
+            
+            for k in range(len(t)):
+                u_k = float(u_kf[k])
+                y_k = np.array([[float(-tof[k])]])
+            
+                mu, sigma = kf(mu, sigma, u_k, y_k, Ad, Bd, C, sig_u, sig_z)
+                mu_hist.append(mu.flatten())</code></pre>
+
+         <p>
+          The Kalman Filter combines the system model with noisy sensor measurements to estimate both distance and velocity.
+          To improve performance, I tuned the measurement noise parameter.
+         </p>
+
+         <p>
+           \[
+           \sigma_3 = 3 \text{ mm}
+           \]
+         </p>
+         <p>
+           \[
+           \Sigma_z = 9
+           \]
+         </p>
+         <p>
+           With this tuning, the filter achieved a mean distance error of:
+         </p>
+         <p>
+           \[
+           \text{Mean error} = 3.31 \text{ mm}
+           \]
+         </p>
+
+          <p>
+            <img class="img-small" src="T 3.png" alt="   ">
+
+        </p>
+
+        <p>
+          Because the estimated velocity is not directly measured, the figure shows an initial transient where the value starts higher than expected and then decreases before stabilizing. This is due to the initial state and small inconsistencies in the first few ToF measurements. After approximately 0.3–0.5 seconds, the estimate converges and remains stable.
+        </p>
+
+
+        <div class="card">
+
+          <h4>4. Implement the Kalman Filter on the Robot</h4>
+     
+     
+     
+             <P>
+     
+              In this task, I created a KF.hpp file and integrated the Kalman Filter into my existing Lab 5 control system on the Artemis. The purpose of this file was to move the Kalman Filter from Python simulation to the real robot, so the robot could estimate its distance to the wall and its velocity in real time while driving.
+             </P>
+
+             <P>
+
+              The Kalman Filter in KF.hpp stores the state estimate and covariance, create the prediction step using the previous motor command, and then updates the estimate using the newest ToF measurement. This allows the robot to estimate its motion continuously instead of relying only on slow and noisy ToF sensor updates. The filter is called in control_update(), where the previous control input and current ToF reading are passed into the Kalman Filter before computing the PID error:
+
+             </P>
+
+
+             <pre><code class="language-python">// control.hpp
+              const float raw_dist_mm = control_get_distance_mm();
+              
+              kf_step(g_pid.last_u, raw_dist_mm);
+              
+              const float est_dist_mm = kf_get_estimated_distance_mm();
+              const float est_vel_mm_s = kf_get_estimated_velocity_mm_s();
+              
+              const float control_dist_mm = (est_dist_mm > 0.0f)
+                                              ? ((est_dist_mm < raw_dist_mm) ? est_dist_mm : raw_dist_mm)
+                                              : raw_dist_mm;
+              
+              const float error = g_pid.setpoint_mm - control_dist_mm;
+              </code></pre>
+
+
+              <p>
+                Inside KF.hpp, the Kalman Filter follows the standard prediction and update structure. The previous input is used to predict the next state, and the newest ToF measurement is used to correct the prediction:
+              </p>
+
+
+                <p>
+                  To test the onboard Kalman Filter, I ran the robot toward a wall as fast as possible using a simple P controller. The goal of this test was not to fully tune the controller, but to verify that the Kalman Filter could still provide a stable and accurate estimate during fast motion. During each run, I logged the raw ToF distance, the Kalman Filter estimated distance, the estimated velocity, and the control input over BLE.
+                </p>
+
+             <p>
+              <img class="img-small" src="T 4.png" alt="   ">
+  
+          </p>
+
+          <p>
+            From the results, the Kalman Filter estimated distance follows the raw ToF signal closely while producing a smoother estimate. This can be seen in the plot, where the red KF distance curve tracks the blue raw ToF measurements very closely throughout the run. The estimated velocity is also physically reasonable. It is large at the beginning when the robot accelerates toward the wall, then decreases as the robot slows down, and changes sign when the robot overshoots and begins correcting its position.
+          </p>
+
+          <p>
+            The logged error values also show that the filter performs well. The mean error was approximately -22.98 mm, the mean absolute error was 37.66 mm, and the maximum absolute error was 94.05 mm. These values showing that the onboard Kalman Filter remained close to the measured wall distance even during fast motion.
+          </p>
+         </div>
+
+
+
+         <div class="card">
+
+          <h4>Conclusion</h4>
+     
+     
+     
+             <p>
+              The Kalman Filter improved the robot’s estimation compared to the linear extrapolation in Lab 5 by combining a model with noisy sensor data to produce smoother and more reliable distance and velocity estimates. It was really cool to implement this on a real robot and see it work in real time, especially when running the robot at higher speed. Even though there is still some small error, the overall system feels more stable and responsive than before.
+             </p>
+     
+    
+     
+     
+     
+         </div>
+
      </div>
-
-
-
-
-
-
-
-
-
     <div class="footer">
       <a class="back-button" href="../../index.html">← Back to Main Page</a>
     </div>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 8 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <!-- MathJax for LaTeX equations -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .img-small {
+      max-width: 360px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .img-medium {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 8: Stunts</h1>
+   
+    <div class="card">
+      <h3>Objective</h3>
+      <p>
+        The goal of this lab was to make the robot perform the drift stunt by driving quickly toward a wall, triggering a turn near 3 ft from the wall, completing a 180° turn, and then driving back in the opposite direction. it includes distance sensing, yaw control, and a state-based sequence in one controller.
+      </p>
+    </div>
+
+
+    <div class="card">
+      <h3>Stunt Setup</h3>
+
+      <div class="card">
+
+
+      <h4></h4>
+
+      <p>
+        I implemented the stunt as a simple state machine with three phases: approach, turn, and return. During the approach phase, the robot drives forward using a constant motor command and monitors the front ToF sensor. Once the measured distance drops below a manually tuned threshold, the controller switches into the turn phase. After the turn settles near 180°, the controller switches into a return phase and drives straight back while holding heading.
+      </p>
+      
+      <p>
+        For this lab I decided to use the raw front ToF measurement for the trigger instead of the Kalman Filter. From testing, the raw ToF reading was already stable enough to detect the turn point, and it gave more direct real-time behavior than the KF estimate during the stunt.
+      </p>
+
+      <P>
+        IMU Update for Lab 8
+      </P>
+      
+      <p>
+        A major difference from Lab 6 was the yaw source. Instead of relying on gyro-integrated yaw alone, I enabled the DMP on the ICM-20948 and extracted yaw from the quaternion output. I also tracked yaw in unwrapped form, which was necessary because wrapped yaw causes a discontinuity near ±180° and made the robot continue spinning instead of stopping at the turn target.
+       
+      </p>
+      <pre><code class="language-python">success &= (g_icm.initializeDMP() == ICM_20948_Stat_Ok);
+success &= (g_icm.enableDMPSensor(INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR) == ICM_20948_Stat_Ok);
+success &= (g_icm.setDMPODRrate(DMP_ODR_Reg_Quat6, 0) == ICM_20948_Stat_Ok);
+success &= (g_icm.enableFIFO() == ICM_20948_Stat_Ok);
+success &= (g_icm.enableDMP() == ICM_20948_Stat_Ok);</code></pre>
+
+      <P>
+        The wrapped and unwrapped yaw values were maintained as follows:
+      </P>
+
+      <pre><code class="language-python">static inline float imu_get_yaw_deg()           { return g_imu_state.yaw_g; }
+        static inline float imu_get_yaw_unwrapped_deg() { return g_imu_state.yaw_g_unwrapped; }
+        
+        static inline void imu_apply_zero_offset() {
+          const float rel_unwrapped = g_imu_state.yaw_raw_unwrapped_deg - g_imu_state.yaw_zero_offset_deg;
+          g_imu_state.yaw_g_unwrapped = rel_unwrapped;
+          g_imu_state.yaw_g = imu_wrap_deg(rel_unwrapped);
+        }</code></pre>
+
+      <P>
+
+        180° Turn Control
+
+      </P>
+
+      <P>
+        When the ToF trigger is crossed, the controller stores the current unwrapped yaw and creates a turn target 180° away. The turn error is computed using unwrapped yaw instead of wrapped yaw. This was the key fix that made the stunt work reliably.
+      </P>
+
+      <pre><code class="language-python">g_pid.turn_start_unwrapped_deg = yaw_unwrapped_deg;
+        g_pid.turn_target_unwrapped_deg = yaw_unwrapped_deg + 180.0f * g_pid.turn_dir;
+        g_pid.yaw_target_unwrapped_deg = g_pid.turn_target_unwrapped_deg;</code></pre>
+
+      <P>
+        The turn controller uses a PD command:
+      </P>
+
+      <pre><code class="language-python">error = g_pid.turn_target_unwrapped_deg - yaw_unwrapped_deg;
+
+        const float error_dot = (error - g_pid.prev_yaw_error) / dt;
+        float steer_cmd = (kp_turn * error) + (g_pid.kd * error_dot);
+        steer_cmd = clamp(steer_cmd, -g_pid.turn_max_u, g_pid.turn_max_u);
+        
+        left_u = -steer_cmd;
+        right_u = steer_cmd;</code></pre>
+
+      <P>
+        The turn phase is only considered complete when both the angle error and angular velocity are small enough:
+      </P>
+
+
+      <pre><code class="language-python">const bool angle_good = fabs(error) <= g_pid.turn_exit_deg;
+        const bool rate_good  = fabs(gz_dps) <= g_pid.turn_settle_gz_dps;
+        
+        if (angle_good && rate_good) {
+          g_pid.turn_locked = true;
+          g_pid.return_heading_deg = control_wrap_deg(g_pid.turn_target_unwrapped_deg);
+        }</code></pre>
+
+      <P>
+        Return Control
+      </P>
+
+      <P>
+        After the robot finishes the 180° turn, it switches into a forward return mode. At first, the robot would sometimes finish the turn and keep rotating instead of translating. This happened because the heading correction after the turn was too strong. I fixed that by clamping the heading correction and forcing both return motor commands to stay positive.
+      </P>
+
+      <pre><code class="language-python">float heading_err = control_wrap_deg(g_pid.return_heading_deg - yaw_deg);
+        float steer_hold = g_pid.heading_kp * heading_err;
+        steer_hold = clamp(steer_hold, -0.10f, 0.10f);
+        
+        left_u  = g_pid.return_u - steer_hold;
+        right_u = g_pid.return_u + steer_hold;
+        
+        left_u  = clamp(left_u,  0.10f, 1.0f);
+        right_u = clamp(right_u, 0.10f, 1.0f);</code></pre>
+
+      <p>
+        Results
+      </p>
+
+
+      <P>
+        Here are the results, the distance plot shows the robot approaching the wall and then increasing its distance again after the turn. The yaw plot shows the robot reaching the turned around heading. The motor command plot clearly shows the three phases: forward motion, in place turn with opposite motor signs, and forward return motion.
+
+
+      </P>
+
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/K1f8-Mo9ec8" allowfullscreen></iframe>
+      </div>
+
+      <P>
+        <img class="img-medium" src="ori.png" alt="   ">
+
+      </P>
+
+      <P>
+        And here are two more videos of the stunt. 
+      </P>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/1tbsONX60io" allowfullscreen></iframe>
+      </div>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/xymjgYcP1lU" allowfullscreen></iframe>
+      </div>
+
+      
+
+
+
+
+
+      
+    
+      </div>
+
+
+    <div class="card">
+
+     <h4>Conclusion</h4>
+
+
+        <P>
+          Very fun lab, excited for next! 
+        </P>
+
+    </div>
+
+
+
+    <div class="footer">
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -120,7 +120,7 @@
     <div class="card">
       <h3>Objective</h3>
       <p>
-        The goal of this lab was to make the robot perform the drift stunt by driving quickly toward a wall, triggering a turn near 3 ft from the wall, completing a 180° turn, and then driving back in the opposite direction. This required integrating distance sensing, yaw control, and a state based sequence into one controller.
+        The goal of this lab was to make the robot perform the drift stunt by driving quickly toward a wall, triggering a turn near 3 ft from the wall, completing a 180° turn, and then driving back in the opposite direction.I integrated distance sensing, yaw control, and a state based sequence into one controller.
       </p>
     </div>
 
@@ -133,13 +133,9 @@
       <p>
         I implemented the stunt as a simple state machine with three phases: approach, turn, and return. During the approach phase, the robot drives forward using a constant motor command and monitors the front ToF sensor. Once the measured distance drops below a manually tuned threshold, the controller switches into the turn phase. After the turn settles near 180°, the controller switches into a return phase and drives straight back while holding heading.
       </p>
-      
-      <p>
-        For this lab, I used the raw front ToF measurement for the trigger instead of the Kalman Filter.
-      </p>
 
       <p>
-        From testing, the raw ToF reading was stable enough to detect the turn point and provided more direct real time behavior than the KF estimate during the stunt.
+        I used the raw front ToF measurement for the trigger instead of the Kalman Filter. From testing, the raw ToF reading was stable enough to detect the turn point and provided more direct real time behavior than the KF estimate during the stunt.
       </p>
 
       <h4>IMU Update for Lab 8</h4>
@@ -222,7 +218,7 @@ success &= (g_icm.enableDMP() == ICM_20948_Stat_Ok);</code></pre>
       <h4>Results</h4>
 
       <p>
-        The distance plot shows the robot approaching the wall and then increasing its distance again after the turn, confirming a successful return. The yaw plot shows the robot reaching the turned around heading near 180°. The motor command plot clearly shows the three phases: forward motion, in place turning with opposite motor signs, and forward return motion.
+        As we can see the distance plot shows the robot approaching the wall and then increasing its distance again after the turn. The yaw plot shows the robot reaching the turned around heading near 180°. The motor command plot clearly shows the three phases: forward motion, in place turning with opposite motor signs, and forward return motion.
       </p>
 
 

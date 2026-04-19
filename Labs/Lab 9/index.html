@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 9 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <!-- MathJax for LaTeX equations -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .img-small {
+      max-width: 360px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .img-medium {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .equation-block {
+      overflow-x: auto;
+      margin: 10px 0 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .equation-block p {
+      margin: 0;
+    }
+
+    .endpoint-block {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 9: Mapping</h1>
+   
+    <div class="card">
+      <h4>Objective</h4>
+      <p>
+        The goal of this lab was to map a static room using the robot, a front-facing ToF sensor, and IMU yaw. The robot was placed at several known locations in the arena and rotated in place while collecting distance readings. These readings were converted into points in the robot frame, transformed into the world frame, and merged into one map. Finally, I manually estimated line segments from the scatter plot so the map can be used later in the simulator.
+      </p>
+    </div>
+
+
+    <div class="card">
+      <h3>Orientation Control Setup</h3>
+
+      <p>
+        For the mapping motion, I used PID control on orientation instead of open-loop spinning. I chose this because I wanted the distance readings to be spaced more consistently in angle. Instead of continuously rotating and trying to match ToF timing to a changing yaw, the robot turned to one target angle, stopped briefly, sampled the ToF sensor, and then moved to the next heading.
+      </p>
+
+      <p>
+        The control loop used DMP yaw from the IMU as the feedback signal. At each step, the robot compared the target heading with the measured unwrapped yaw. The PID output was used as a turn command, where the left and right motors were driven in opposite directions so the robot rotated roughly on axis.
+      </p>
+
+      
+      <pre><code class="language-cpp">case MAP_TURNING: {
+        error = g_pid.current_target_unwrapped_deg - yaw_unwrapped_deg;
+        const float error_dot = (error - g_pid.prev_yaw_error) / dt;
+      
+        float turn_u = (g_pid.kp * error) + (g_pid.kd * error_dot);
+      
+        if (fabs(error) > 0.5f && fabs(turn_u) < g_pid.turn_min_u) {
+          turn_u = (turn_u >= 0.0f) ? g_pid.turn_min_u : -g_pid.turn_min_u;
+        }
+      
+        turn_u = clamp(turn_u, -g_pid.turn_max_u, g_pid.turn_max_u);
+      
+        left_u = -turn_u;
+        right_u = turn_u;
+        control_set_lr_and_remember(left_u, right_u);
+      
+        g_pid.prev_yaw_error = error;
+      
+        if (fabs(error) <= g_pid.angle_tolerance_deg) {
+          motors_stop();
+          g_pid.current_sample_count = 0;
+          g_pid.sample_sum_mm = 0.0f;
+          g_pid.state = MAP_SETTLE;
+          g_pid.state_start_ms = now_ms;
+        }
+        break;
+      }</code></pre>
+
+      <p>
+        The scan used 15 degree increments, so each full rotation had 24 target headings. This gave enough angular coverage for the map while still keeping the scan time reasonable.
+      </p>
+
+
+      <h4>ToF Sampling</h4>
+
+      <p>
+        At each target angle, the robot did not immediately save the first ToF value. Instead, it stopped, waited briefly, and then collected multiple fresh ToF readings. I used the front ToF sensor only, which was the same sensor path I used in the previous lab. In my code this sensor was read through g_tof2_last. For each orientation, the robot accumulated 5 fresh ToF readings and stored the average as one map point. 
+      </p>
+
+      <pre><code class="language-cpp">case MAP_SAMPLE:
+        motors_stop();
+      
+        if (control_has_fresh_tof() && raw_dist_mm > 0.0f) {
+          g_pid.sample_sum_mm += raw_dist_mm;
+          g_pid.current_sample_count++;
+          g_pid.sample_last_yaw_deg = yaw_deg;
+          g_pid.last_tof_sample_t_ms = g_tof2_last.t_ms;
+        }
+      
+        if (g_pid.current_sample_count >= g_pid.samples_per_angle) {
+          const float avg_dist_mm =
+            g_pid.sample_sum_mm / (float)g_pid.current_sample_count;
+      
+          map_log_push(now_ms,
+                       g_pid.current_step_idx,
+                       g_pid.current_target_deg,
+                       g_pid.sample_last_yaw_deg,
+                       avg_dist_mm);
+      
+          g_pid.state = MAP_ADVANCE;
+        }
+        break;</code></pre>
+
+      <h4>Bluetooth Data Collection</h4>
+
+      <p>
+        After each full scan, the robot sent the stored map data back to Python over BLE. I reused the same BLE structure from previous labs.  I used a BLE notification handler to parse incoming messages. Every map row was added to state["map_log"], then converted into a dataframe.
+      </p>
+
+      <p>
+       Here's a video of robot turning on axis:
+      </p>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/QX0fL9uxK7k" allowfullscreen></iframe>
+      </div>
+
+      <h4>Polar Sanity Check</h4>
+
+      <p>
+        I first collected data from positions (-3,-2), (5,3), (0,3), (0,0), and (5,-3). Before merging the scans into the world frame, I plotted the readings from each location in polar coordinates. I recorded twice at all the locations, so I had two sets of data to compare. Here are the polar plots from the first scan.
+      </p>
+
+      <p>
+        <img class="img-medium" src="polo 1.png" alt="   ">
+      </p>
+
+      <h4>Coordinate Conversion</h4>
+
+      <p>
+
+        To make a 2D point, I combined ToF distance with the measured yaw angle. This converted each polar reading into a local Cartesian point in the robot frame. At first, my local plot was flipped about the x-axis. This happened because the robot scanned clockwise, while the normal math convention assumes positive angles rotate counterclockwise. To fix this, I used a negative sign on the sine term.
+
+      </p>
+
+      <pre><code class="language-python">def add_local_xy(df, angle_col="yaw_deg"):
+        out = df.copy()
+    
+        theta = np.deg2rad(out[angle_col].to_numpy())
+        d = out["dist_ft"].to_numpy()
+    
+        out["x_local_ft"] = d * np.cos(theta)
+        out["y_local_ft"] = -d * np.sin(theta)
+    
+        return out</code></pre>
+
+      <p>
+        Another important correction was the unit conversion. The ToF sensor returned millimeters, but the lab map coordinates are in feet. Since the robot positions were things like (5,3), I converted all ToF readings into feet before merging the scans.
+
+      </p>
+
+      <h4>Transformation to World Frame</h4>
+
+      <p>
+        For a local point:
+      </p>
+
+      <div class="equation-block">
+        <p>
+          \[
+          p_r =
+          \begin{bmatrix}
+          x_r \\
+          y_r \\
+          1
+          \end{bmatrix}
+          \]
+        </p>
+      </div>
+
+      <p>
+        and a robot position \((x_0, y_0)\), the homogeneous transformation matrix was:
+      </p>
+
+      <div class="equation-block">
+        <p>
+          \[
+          T_{\text{world},\text{robot}} =
+          \begin{bmatrix}
+          1 & 0 & x_0 \\
+          0 & 1 & y_0 \\
+          0 & 0 & 1
+          \end{bmatrix}
+          \]
+        </p>
+      </div>
+
+      <p>
+        Then:
+      </p>
+
+      <div class="equation-block">
+        <p>
+          \[
+          p_w = T_{\text{world},\text{robot}} p_r
+          \]
+          \[
+          x_w = x_r + x_0
+          \]
+          \[
+          y_w = y_r + y_0
+          \]
+        </p>
+      </div>
+
+      <p>
+        In Python, I applied this transformation to each scan based on its location label and plotted all transformed points in one figure for each recording, giving two merged plots total.
+      </p>
+
+      <p>
+        <img class="img-medium" src="Merged 1.png" alt="   ">
+      </p>
+
+      <p>
+        <img class="img-medium" src="Merged 2.png" alt="   ">
+      </p>
+
+      <h4>Line-Based Map</h4>
+
+      <p>
+        The final wall endpoints were not chosen to fit every single point. Instead, I used the strongest point clusters and made small post processing corrections so the line map matched the physical arena shape. 
+      </p>
+
+      <p>
+        <img class="img-medium" src="scan 1.png" alt="   ">
+      </p>
+
+      <p>
+        <img class="img-medium" src="scan 2.png" alt="   ">
+      </p>
+      <pre class="endpoint-block"><code>x_start = [-5.6, -5.6, -2.2, -2.2,  6.1,  6.1,  1.2,  1.2, -1.2, -1.2,
+           2.0,  2.0,  4.9,  4.9]
+
+y_start = [-4.2,  0.0,  0.0,  4.05, 4.05, -4.2, -4.2, -2.25, -2.25, -4.2,
+           -0.9,  1.8,  1.8, -0.9]
+
+x_end =   [-5.6, -2.2, -2.2,  6.1,  6.1,  1.2,  1.2, -1.2, -1.2, -5.6,
+           2.0,  4.9,  4.9,  2.0]
+
+y_end =   [ 0.0,  0.0,  4.05, 4.05, -4.2, -4.2, -2.25, -2.25, -4.2, -4.2,
+            1.8,  1.8, -0.9, -0.9]</code></pre>
+
+
+     <h4>Conclusion</h4>
+
+
+        <p>
+          This lab took a lot of debugging because small mistakes in units or angle direction completely changed the map. The final map is not perfect, but it captures the main walls and obstacle geometry well enough for the next localization lab.
+        </p>
+
+    </div>
+
+
+
+    <div class="footer">
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+    </div>
+  </div>
+</body>
+</html>

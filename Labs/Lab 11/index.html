@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 11 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <!-- MathJax for LaTeX equations -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .img-small {
+      max-width: 360px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .img-medium {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .equation-block {
+      overflow-x: auto;
+      margin: 10px 0 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .equation-block p {
+      margin: 0;
+    }
+
+    .endpoint-block {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    pre {
+      overflow-x: auto;
+      white-space: pre;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 14px;
+      overflow-x: auto;
+      display: block;
+    }
+
+    .results-table th,
+    .results-table td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .results-table th {
+      background: rgba(255,255,255,0.06);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 11: Localization</h1>
+   
+    <div class="card">
+      <h4>Objective</h4>
+      <p>
+        The goal of this lab was to use a 360 degree ToF scan and the Bayes filter update step to localize the real robot at four known poses.
+      </p>
+    </div>
+
+
+    <div class="card">
+      <h3>Simulation</h3>
+
+      <p>
+        Before running the real robot, I first ran lab11_sim.ipynb to check that the provided localization pipeline worked in simulation.
+      </p>
+      <p>
+        <img class="img-medium" src="sim.png" alt="   ">
+      </p>
+
+      <P>
+        This gave me a baseline before using real robot data, and I expected more error from sensor noise and mismatch between the physical room and the map.
+
+      </P>
+
+
+      <h4>Implementation</h4>
+
+      <p>
+        For the real robot part, I reused my Lab 9 mapping scan and connected it to the Bayes filter code from Lab 10. Since the robot motion is noisy and I did not have an external tracking system, I only used the update step starting from a uniform prior.
+      </p>
+
+      <P>
+        My robot spins in place and collects 18 ToF readings, one every 20 degrees. These readings are sent back to Python over BLE using the same MAP|... format I used in Lab 9. In perform_observation_loop(), I receive the logged scan rows, sort them by step index, convert the ToF distances from millimeters to meters, and return the ranges and bearings in the format the localization code expects.
+      </P>
+
+      <P>
+        The localization code expects the scan to be ordered counter-clockwise with bearings from 0 to 340 degrees. I also manually selected the ground-truth pose before each run, so the green point in the plot matched where I physically placed the robot. Below is the simplfied code:
+      </P>
+
+      <pre><code class="language-python">def perform_observation_loop(self, rot_vel=120):
+        expected_count = int(self.config_params["mapper"]["observations_count"])
+        expected_bearings = np.arange(expected_count) * (360.0 / expected_count)
+        max_range_m = float(self.config_params["sensor_range"])
+    
+        scan_rows = []
+        scan_done = False
+    
+        def rx_handler(_, data):
+            nonlocal scan_done
+    
+            msg = bytes(data).decode("utf-8", errors="ignore").strip()
+    
+            if msg.startswith("MAP|"):
+                parts = msg.split("|")
+                scan_rows.append({
+                    "step_idx": int(float(parts[2])),
+                    "target_deg": float(parts[3]),
+                    "yaw_deg": float(parts[4]),
+                    "dist_mm": float(parts[5]),
+                })
+    
+            elif msg == "MAP_DONE":
+                scan_done = True
+    
+        self.ble.start_notify(self.ble.uuid["RX_STRING"], rx_handler)
+    
+        self.ble.send_command(CMD.START_TOF, "")
+        self.ble.send_command(CMD.ENABLE_MOTORS, "")
+        self.ble.send_command(CMD.SET_PID_GAINS, "0.018|0|0.0")
+        self.ble.send_command(CMD.START_CONTROL, "")
+    
+        self.ble.send_command(CMD.DUMP_LOG, "")
+    
+        rows_by_step = {}
+        for row in scan_rows:
+            rows_by_step[row["step_idx"]] = row
+    
+        rows = [rows_by_step[i] for i in sorted(rows_by_step.keys())]
+    
+        sensor_ranges = np.array([row["dist_mm"] * 1e-3 for row in rows])
+        sensor_ranges = np.clip(sensor_ranges, 0.0, max_range_m)
+    
+        sensor_bearings = expected_bearings[:len(sensor_ranges)]
+    
+        self.ble.send_command(CMD.STOP, "")
+        self.ble.stop_notify(self.ble.uuid["RX_STRING"])
+    
+        return sensor_ranges[:, np.newaxis], sensor_bearings[:, np.newaxis]</code></pre>
+
+      <P>
+        This function is the main part that connects my real robot to the localization code. The return line is important because the Bayes filter expects both the range readings and the bearing angles as NumPy column arrays.
+      </P>
+      
+      <h4>Results</h4>
+
+      <p>
+        The four test poses from the lab TOF measurments are given in mm but the localization map uses meters, so I converted them. 
+      </p>
+
+      <P>
+        (-3, -2)
+      </P>
+
+      <p>
+        <img class="img-medium" src="-3-2.png" alt="   ">
+      </p>
+
+
+      <P>
+        At this pose, the estimated result was (-0.914, -0.610, 10°), which matches the ground truth almost exactly. This was the most accurate case, with only a small heading error.
+      </P>
+
+
+      <P>
+        (0, 3)
+      </P>
+
+      <p>
+        <img class="img-medium" src="03.png" alt="   ">
+      </p>
+
+
+      <P>
+        At this pose, the estimate was (0.305, 0.914, -10°). The y position matched well, but the x position was off by about one grid cell, resulting in a position error of about 0.305 m.
+      </P>
+
+      <P>(5, -3)
+
+      </P>
+
+      <p>
+        <img class="img-medium" src="5-3.png" alt="   ">
+      </p>
+
+      <P>
+        At this pose, the estimate was (1.829, -0.610, 30°), which was the least accurate result. The estimate was off by about one grid cell in both x and y, giving a total position error of about 0.431 m. I think it’s because nearby grid cells in this region produce similar scan patterns, making it harder for the filter to distinguish between them.
+
+      </P>
+
+      <P>
+        (5,3)
+      </P>
+
+      <p>
+        <img class="img-medium" src="53.png" alt="   ">
+      </p>
+
+      <P>
+        At this pose, the estimate was (1.524, 0.610, -10°). The x position matched the ground truth, but the y position was off by about one grid cell, resulting in a position error of about 0.305 m.
+      </P>
+      <P>
+        Overall, the robot localized to the correct region of the map in all four cases. The best result was nearly exact, while the other cases showed errors at the level of one grid cell, with the largest error occurring when the estimate was off by one cell in both x and y. Compared to simulation, the real robot results show larger errors due to sensor noise and mismatch between the physical environment and the map.
+      </P>
+
+      
+
+
+
+
+    </div>
+
+
+
+    <div class="footer">
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+    </div>
+  </div>
+</body>
+</html>

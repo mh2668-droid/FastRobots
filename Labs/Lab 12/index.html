@@ -173,20 +173,20 @@
     <div class="card">
       <h4>Objective</h4>
       <p>
-        Can’t believe it’s already the final lab for this class. For the last lab, I decided to do the inverted pendulum since it felt like a fun way to end the semester. I balanced the robot upright using closed loop control and IMU feedback. Instead of trying to swing the robot up from the ground, I used the easier and more stable approach of starting the robot near upright and stabilizing around that position.
+        Can’t believe it’s already the final lab for this class. I decided to do the inverted pendulum since it felt like a fun way to end the semester. I balanced the robot upright using closed loop control and IMU feedback. Instead of trying to swing the robot up from the ground, I used the easier and more stable approach of starting the robot near upright and stabilizing around that position.
       </p>
     </div>
 
 
     <div class="card">
-      <h3>Setup and Initial Testing</h3>
+      <h3>Setup and Testing</h3>
 
       <p>
-        The overall setup for this lab was pretty simple compared to some of the previous labs. The controller itself ran onboard the Artemis while Python was used to send gains and target values over BLE. The robot used IMU feedback to determine its pitch angle and continuously drive forward or backward to stay balanced.
+        The overall setup for this lab was pretty simple compared to some of the previous labs. The robot used IMU feedback to determine its pitch angle and continuously drove forward or backward to stay balanced.
       </p>
 
       <p>
-        At first, I tested the robot by holding it upright and using that initial angle as the balancing target. This worked sometimes, but every run started slightly differently depending on how I held the robot. After looking through the plots and testing different values, I noticed the robot naturally balanced closest around 92.5 degrees, so I changed the controller to always target that angle directly instead of depending on the startup position.
+        At first, I tested the robot by holding it upright and using that initial angle as the balancing target. This worked sometimes, but every run started slightly differently depending on how I held the robot. After looking through the plots and testing different values, I noticed the robot naturally balanced closest around 93 degrees, so I changed the controller to always target that angle directly instead of depending on the startup position.
 
       </p>
 
@@ -207,7 +207,7 @@
 
 
       <p>
-        The balancing controller was implemented onboard the Artemis using a PD controller. The robot continuously compared the current DMP pitch angle against the target angle of 92.5 degrees and adjusted the wheels to try to stay upright. The basic idea was that if the robot tilted too far in one direction, the wheels would drive to catch it. If it tilted the other way, the wheels would drive the opposite direction. The farther the robot got from the target angle, the stronger the correction became.
+        The balancing controller was implemented onboard the Artemis using a PD controller. The robot continuously compared the current DMP pitch angle against the target angle of 93 degrees and adjusted the wheels to try to stay upright. The basic idea was that if the robot tilted too far in one direction, the wheels would drive to catch it. If it tilted the other way, the wheels would drive the opposite direction. The farther the robot got from the target angle, the stronger the correction became.
       </p>
 
 
@@ -277,7 +277,7 @@
 
       <h4>Results</h4>
 
-      <p>Here are some videos of it running:</p>
+      <p>Here is the first video of it running:</p>
 
       <div class="video-wrap">
         <iframe src="https://www.youtube.com/embed/XQIFz5zVJT0" allowfullscreen></iframe>
@@ -289,7 +289,7 @@
 
 
       <p>
-        The plot shows the run from the first video stayed within about ±4 degrees of the 92.5 degree target for most of the test, with a few larger drops when the robot started falling and recovered.
+        The plot shows that the run from the first video stayed within about ±4 degrees of the target of 93 degrees for most of the test, with a few larger dips when the robot started falling but was still able to recover.
       </p>
 
       <p>
@@ -304,10 +304,10 @@
       </div>
 
 
-      <h4>Conclusion</h4>
+      <h4>Last Words</h4>
 
       <p>
-        Overall, this was a fun way to end the class. The robot was definitely not perfectly stable, but after a lot of tuning it was able to balance near upright for multiple runs. This lab ended up being much more sensitive to tuning, motor response, and small angle offsets than I originally expected, but it was pretty satisfying watching it finally stay up without immediately falling over.
+        This was a fun way to end the class. The robot was definitely not perfectly stable, but after a lot of tuning it was able to balance near upright for multiple runs. I would like to give special thanks to Prof. Helbling and all the TAs for making this class such a great experience. I learned a lot and had a great time building, debugging, and tuning the robot each week. Goodbye and have a good life everyone!
       </p>
 
 

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 12 | Fast Robots</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <!-- MathJax for LaTeX equations -->
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .back-button:hover { text-decoration: none; filter: brightness(1.05); }
+
+    .muted { color: var(--muted); }
+
+    .media {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0 16px;
+    }
+
+    h2 {
+      margin-top: 28px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      margin: 10px 0 16px;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .footer {
+      margin-top: 26px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .img-small {
+      max-width: 360px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .img-medium {
+      max-width: 520px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .img-big {
+      max-width: 600px;
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px auto 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .equation-block {
+      overflow-x: auto;
+      margin: 10px 0 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .equation-block p {
+      margin: 0;
+    }
+
+    .endpoint-block {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    pre {
+      overflow-x: auto;
+      white-space: pre;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 14px;
+      overflow-x: auto;
+      display: block;
+    }
+
+    .results-table th,
+    .results-table td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .results-table th {
+      background: rgba(255,255,255,0.06);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <!-- Adjust this path based on where you put lab1.html -->
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+      <span class="muted">Fast Robots | Spring 2026</span>
+    </div>
+
+    <h1>Lab 12: Inverted Pendulum Control</h1>
+   
+    <div class="card">
+      <h4>Objective</h4>
+      <p>
+        Can’t believe it’s already the final lab for this class. For the last lab, I decided to do the inverted pendulum since it felt like a fun way to end the semester. I balanced the robot upright using closed loop control and IMU feedback. Instead of trying to swing the robot up from the ground, I used the easier and more stable approach of starting the robot near upright and stabilizing around that position.
+      </p>
+    </div>
+
+
+    <div class="card">
+      <h3>Setup and Initial Testing</h3>
+
+      <p>
+        The overall setup for this lab was pretty simple compared to some of the previous labs. The controller itself ran onboard the Artemis while Python was used to send gains and target values over BLE. The robot used IMU feedback to determine its pitch angle and continuously drive forward or backward to stay balanced.
+      </p>
+
+      <p>
+        At first, I tested the robot by holding it upright and using that initial angle as the balancing target. This worked sometimes, but every run started slightly differently depending on how I held the robot. After looking through the plots and testing different values, I noticed the robot naturally balanced closest around 92.5 degrees, so I changed the controller to always target that angle directly instead of depending on the startup position.
+
+      </p>
+
+      <p>
+        The final tuned values ended up being a proportional gain of 0.03, derivative gain of -0.002, and no integral gain. The safety limit was set to 25 degrees and the maximum motor output was limited to 0.25 to prevent the robot from overcorrecting too aggressively. During successful runs, I would hold the robot upright for about a second, let the controller stabilize, and then slowly release it.
+      </p>
+
+      <p>
+        One thing I noticed during tuning was that larger proportional and derivative gains made the robot rock back and forth very aggressively. The robot would quickly overshoot the target angle and throw itself over the other side. Reducing the gains and lowering the motor output made the motion much smoother and more controllable.
+      </p>
+
+      <p>
+        This lab definitely took way too many tuning runs before finally working consistently.
+      </p>
+
+
+      <h4>Controller</h4>
+
+
+      <p>
+        The balancing controller was implemented onboard the Artemis using a PD controller. The robot continuously compared the current DMP pitch angle against the target angle of 92.5 degrees and adjusted the wheels to try to stay upright. The basic idea was that if the robot tilted too far in one direction, the wheels would drive to catch it. If it tilted the other way, the wheels would drive the opposite direction. The farther the robot got from the target angle, the stronger the correction became.
+      </p>
+
+
+
+      <p>
+        The first part of the controller allowed the target angle to be changed from Python. This made tuning much easier because I could change the balancing point without re-uploading the Arduino code every time.
+      </p>
+
+      <pre><code class="language-cpp">static inline void pendulum_set_target(float target_deg) {
+        g_pend.target_pitch_deg = target_deg;
+      }
+      
+      static inline float pendulum_get_angle_deg() {
+        return imu_get_dmp_pitch_deg();
+      }</code></pre>
+
+      <p>
+        The robot then read the current DMP pitch angle and compared it against the target angle. This gave the error used by the controller.
+      </p>
+
+      <pre><code class="language-cpp">const float pitch_deg = pendulum_get_angle_deg();
+        const float pitch_rate_dps = pendulum_get_rate_dps();
+        
+        const float error_deg =
+            imu_wrap_deg(pitch_deg - g_pend.target_pitch_deg);</code></pre>
+
+
+      <p>
+
+        The actual balancing logic was done with a proportional and derivative term. The proportional term pushed the wheels harder when the robot was farther from the target angle, while the derivative term used angular velocity to damp the motion when the robot started falling too quickly.
+      </p>
+
+      <pre><code class="language-cpp">const float p_term = g_pend.kp * error_deg;
+        const float d_raw = g_pend.kd * pitch_rate_dps;
+        
+        g_pend.filtered_d = g_pend.d_alpha * d_raw
+                          + (1.0f - g_pend.d_alpha) * g_pend.filtered_d;
+        
+        float u = p_term + g_pend.filtered_d;
+        
+        u = clamp(u, -g_pend.max_u, g_pend.max_u);
+        u *= g_pend.motor_sign;
+        
+        if (fabs(u) < g_pend.min_u) {
+          u = 0.0f;
+        }
+        
+        motors_set_normalized(u);</code></pre>
+
+        <h4>System Flow</h4>
+
+        <p>
+          The system was split between Python on my laptop and the Artemis on the robot. Python/Jupyter handled the setup by sending the controller gains, target angle, safety limit, motor sign, output limit, and runtime over BLE. After the controller started, the real-time balancing loop ran onboard the Artemis. This was important because the robot could not depend on Python or BLE timing while balancing.
+        </p>
+        <p>
+          During the run, the Artemis repeatedly read the DMP pitch angle, computed the angle error, checked the safety limit, calculated the PD output, clamped the motor command, and drove both wheel sides. If the robot tilted too far away from the target angle, the controller stopped the motors for safety. After the run, Python dumped the saved data and plotted the results.
+        </p>
+
+        <p>
+          <img class="img-medium" src="flow.png" alt="   ">
+        </p>
+
+        <p>
+          The final test runtime was 15 seconds. Data was saved every 20 ms so the log could cover the full run instead of filling too quickly. The controller itself ran faster than the saved logging rate, so logging did not determine the speed of the balancing loop. The onboard loop was fast enough for real-time reaction, and the main limitations were tuning, motor behavior, and the unstable physics of balancing.
+
+        </p>
+
+      <h4>Results</h4>
+
+      <p>Here are some videos of it running:</p>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/XQIFz5zVJT0" allowfullscreen></iframe>
+      </div>
+
+      <p>
+        <img class="img-medium" src="lab12_1.png" alt="   ">
+      </p>
+
+
+      <p>
+        The plot shows the run from the first video stayed within about ±4 degrees of the 92.5 degree target for most of the test, with a few larger drops when the robot started falling and recovered.
+      </p>
+
+      <p>
+        Here are two more videos of it running:
+      </p>
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/oNzeF0IJV8o" allowfullscreen></iframe>
+      </div>
+
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/emMmv8jrq44" allowfullscreen></iframe>
+      </div>
+
+
+      <h4>Conclusion</h4>
+
+      <p>
+        Overall, this was a fun way to end the class. The robot was definitely not perfectly stable, but after a lot of tuning it was able to balance near upright for multiple runs. This lab ended up being much more sensitive to tuning, motor response, and small angle offsets than I originally expected, but it was pretty satisfying watching it finally stay up without immediately falling over.
+      </p>
+
+
+    </div>
+
+
+
+    <div class="footer">
+      <a class="back-button" href="../../index.html">← Back to Main Page</a>
+    </div>
+  </div>
+</body>
+</html>

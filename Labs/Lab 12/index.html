@@ -213,7 +213,7 @@
 
 
       <p>
-        The first part of the controller allowed the target angle to be changed from Python. This made tuning much easier because I could change the balancing point without re-uploading the Arduino code every time.
+        The first part of the controller allowed the target angle to be changed from Python. This made tuning much easier because I could change the balancing point without reuploading the Arduino code every time.
       </p>
 
       <pre><code class="language-cpp">static inline void pendulum_set_target(float target_deg) {
@@ -260,7 +260,7 @@
         <h4>System Flow</h4>
 
         <p>
-          The system was split between Python on my laptop and the Artemis on the robot. Python/Jupyter handled the setup by sending the controller gains, target angle, safety limit, motor sign, output limit, and runtime over BLE. After the controller started, the real-time balancing loop ran onboard the Artemis. This was important because the robot could not depend on Python or BLE timing while balancing.
+          The system was split between Python on my laptop and the Artemis on the robot. Python/Jupyter handled the setup by sending the controller gains, target angle, safety limit, motor sign, output limit, and runtime over BLE. After the controller started, the real time balancing loop ran onboard the Artemis. This was important because the robot could not depend on Python or BLE timing while balancing.
         </p>
         <p>
           During the run, the Artemis repeatedly read the DMP pitch angle, computed the angle error, checked the safety limit, calculated the PD output, clamped the motor command, and drove both wheel sides. If the robot tilted too far away from the target angle, the controller stopped the motors for safety. After the run, Python dumped the saved data and plotted the results.
@@ -271,7 +271,7 @@
         </p>
 
         <p>
-          The final test runtime was 15 seconds. Data was saved every 20 ms so the log could cover the full run instead of filling too quickly. The controller itself ran faster than the saved logging rate, so logging did not determine the speed of the balancing loop. The onboard loop was fast enough for real-time reaction, and the main limitations were tuning, motor behavior, and the unstable physics of balancing.
+          The final test runtime was 15 seconds. Data was saved every 20 ms so the log could cover the full run instead of filling too quickly. The controller itself ran faster than the saved logging rate, so logging did not determine the speed of the balancing loop. The onboard loop was fast enough for real time reaction, and the main limitations were tuning, motor behavior, and the unstable physics of balancing.
 
         </p>
 
